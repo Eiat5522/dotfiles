@@ -1,0 +1,337 @@
+# Get editor completions based on the config schema
+"$schema" = 'https://starship.rs/config-schema.json'
+
+## Set Starship Prompt Configuration Options:
+# Set continuation prompt symbol.
+continuation_prompt = '▶▶ '
+
+# Inserts a blank line between shell prompts.
+add_newline = false
+
+# Timeout for starship to scan files (in milliseconds).
+scan_timeout = 30
+
+# Timeout for commands executed by starship (in milliseconds).
+command_timeout = 500
+
+## Set position and sequence of Starship prompt.
+# Configure the format of the prompt.
+
+format = """
+$username\
+$sudo\
+$os\
+$directory\
+$vcsh\
+$fossil_branch\
+$fossil_metrics\
+$git_branch\
+$git_commit\
+$git_state\
+$git_metrics\
+$git_status\
+$hg_branch\
+$hg_state\
+$pijul_channel\
+$docker_context\
+$package\
+$cmd_duration\
+$fill\
+$fill\
+$localip\
+$container\
+$kubernetes\
+$netns\
+$c\
+$cmake\
+$cobol\
+$daml\
+$dart\
+$deno\
+$dotnet\
+$elixir\
+$elm\
+$erlang\
+$fennel\
+$fortran\
+$gleam\
+$golang\
+$guix_shell\
+$haskell\
+$haxe\
+$helm\
+$java\
+$julia\
+$kotlin\
+$gradle\
+$lua\
+$nim\
+$nodejs\
+$ocaml\
+$opa\
+$perl\
+$php\
+$pulumi\
+$purescript\
+$python\
+$quarto\
+$raku\
+$rlang\
+$red\
+$ruby\
+$rust\
+$scala\
+$solidity\
+$swift\
+$terraform\
+$typst\
+$vlang\
+$vagrant\
+$zig\
+$buf\
+$nix_shell\
+$conda\
+$meson\
+$spack\
+$aws\
+$gcloud\
+$openstack\
+$azure\
+$nats\
+$direnv\
+$env_var\
+$battery\
+$line_break\
+$shell\
+$character"""
+right_format = """
+$memory_usage\
+$mise\
+$crystal\
+$custom\
+$jobs\
+$status\
+$hostname\
+$time"""
+
+## Customization for individual Starship's module below:
+
+[character] 
+success_symbol = '[➜](bold green)'
+error_symbol = '[✗](bold red)' 
+
+[sudo]
+format = '\[[$symbol]as root($style)\]'
+symbol = ""
+
+[hostname]
+disabled = true
+
+[username]
+format = '\[[$user]($style)\]'
+disabled = true
+
+[directory]
+format = '[$path]($style)[$read_only]($read_only_style)'
+style = "fg:#f57a13"
+truncate_to_repo = true
+read_only = '🔒'
+read_only_style = 'red'
+truncation_symbol = ""
+fish_style_pwd_dir_length = 3
+
+[directory.substitutions]
+"Documents" = " 󰧮 "
+"Music" = "  "
+"Movies" = " 󰿏 "
+"Pictures" =  " "
+"Sources" = "  "
+"Downloads" = "  "
+"~" = " "
+"sustainable-eco-friendly-digital-nomads-directory" = "󰊢 "
+
+[os]
+disabled = false
+style = "bg:mauve fg:#b6b7bb"
+
+[os.symbols]
+Windows = ""
+Ubuntu = "  " #  
+SUSE = ""
+Raspbian = "󰐿"
+Mint = "󰣭"
+Macos = "󰀵"
+Manjaro = ""
+Linux = "󰌽"
+Gentoo = "󰣨"
+Fedora = "󰣛"
+Alpine = ""
+Amazon = ""
+Android = ""
+Arch = "󰣇"
+Artix = "󰣇"
+CentOS = ""
+Debian = "󰣚"
+Redhat = "󱄛"
+RedHatEnterprise = "󱄛"
+
+[shell]
+bash_indicator = " "
+zsh_indicator = "󰰶 "
+fish_indicator = "󰈺"
+powershell_indicator = '_'
+pwsh_indicator = '󰨊 '
+unknown_indicator = "mystery shell"
+format = '[$indicator]($style)'
+style = 'white bold'
+disabled = false
+
+[aws]
+format = '\[[$symbol($profile)(\($region\))(\[$duration\])]($style)\]'
+
+[bun]
+format = '\[[$symbol($version)]($style)\]'
+
+[c]
+format = '\[[$symbol($version(-$name))]($style)\]'
+
+[dart]
+format = '\[[$symbol($version)]($style)\]'
+
+[deno]
+format = '\[[$symbol($version)]($style)\]'
+
+[docker_context]
+format = '\[[$symbol$context]($style)\]'
+
+[dotnet]
+format = '\[[$symbol($version)(🎯 $tfm)]($style)\]'
+
+[gcloud]
+format = '\[[$symbol$account(@$domain)(\($region\))]($style)\]'
+
+[git_branch]
+disabled = false
+symbol = " "
+style = "#7a0a78"
+truncation_length = 10
+format = '[$symbol$branch(:$remote_branch)]($style)'
+
+[git_commit]
+disabled = false
+commit_hash_length = 1
+
+[git_state]
+disabled = false
+rebase = "rebasing"
+merge = "merging"
+revert = "reverting"
+cherry_pick = " picking"
+bisect = "bisecting"
+am = "am'ing"
+am_or_rebase = "am/rebase"
+
+[git_status]
+disabled = false
+style= "fg:#5F8575"
+stashed = " ${count} "
+ahead = "󰞙 ${count} "
+behind = "󰞒 ${count} "
+diverged = "󰵉 ${ahead_count} ${behind_count} "
+conflicted = " ${count} "
+deleted = " ${count} "
+renamed = " ${count} "
+modified = " ${count} "
+staged = " ${count} "
+untracked = "󱅘 ${count}"
+
+[cmd_duration]
+format = '\[[⏱$duration]($style)\]'
+
+
+[golang]
+format = '\[[$symbol($version)]($style)\]'
+
+[guix_shell]
+format = '\[[$symbol]($style)\]'
+
+[localip]
+ssh_only = false
+format = '@[$localipv4](bold red) '
+disabled = true
+
+[java]
+format = '\[[$symbol($version)]($style)\]'
+
+[kubernetes]
+format = '\[[$symbol$context( \($namespace\))]($style)\]'
+
+[lua]
+format = '\[[$symbol($version)]($style)\]'
+
+[meson]
+format = '\[[$symbol$project]($style)\]'
+
+[nix_shell]
+format = '\[[$symbol$state( \($name\))]($style)\]'
+
+[nodejs]
+format = '\[[$symbol($version)]($style)\]'
+detect_files = ["package.json", ".node-version"]
+detect_folders = ["node_modules"]
+
+[package]
+format = '\[[$symbol$version]($style)\]'
+
+[perl]
+format = '\[[$symbol($version)]($style)\]'
+
+[python]
+format = '\[[${symbol}${pyenv_prefix}(${version})(\($virtualenv\))]($style)\]'
+symbol = " "
+disabled = true
+
+[rust]
+format = '\[[$symbol($version)]($style)\]'
+
+[terraform]
+format = '\[[$symbol$workspace]($style)\]'
+
+[fill]
+symbol = '  '
+style = 'bold black'
+disabled = false
+
+[line_break]
+disabled = false   
+
+[battery]
+full_symbol = "🔋"
+charging_symbol = "🔌"
+discharging_symbol = "⚡"
+format = '\[[$symbol$percentage]($style)\]'
+
+[[battery.display]]
+threshold = 30
+style = "bold red"
+
+[[battery.display]]
+threshold = 60
+style = "bold yellow"
+
+[[battery.display]]
+threshold = 100
+style = "bold green"
+
+[time]
+time_format = "%T"
+format = '\[[🕙$time]($style)\]'
+style = "bright-white"
+disabled = false
+
+[memory_usage]
+format = '\[[$symbol[${ram}](|${swap})]($style)\]' 
+disabled = false
+threshold = 51 
+symbol = "󰍛 "
+style = "bold dimmed white"
