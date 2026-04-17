@@ -1,0 +1,68 @@
+[[mgr.prepend_keymap]]
+on   = "!"
+for  = "unix"
+run  = 'shell "$SHELL" --block'
+desc = "Open $SHELL here"
+
+[[input.prepend_keymap]]
+on   = "<Esc>"
+run  = "close"
+desc = "Cancel input"
+
+[[mgr.prepend_keymap]]
+on   = "l"
+run  = "plugin smart-enter"
+desc = "Enter the child directory, or open the file"
+
+[[mgr.prepend_keymap]]
+on  = "y"
+run = [ 'shell -- echo "$@" | xclip -i -selection clipboard -t text/uri-list', "yank" ]
+desc = "Copy selected files to the system clipboard while yanking"
+
+# keymap.toml
+[[mgr.prepend_keymap]]
+on   = "T"
+run  = "plugin toggle-pane min-preview"
+desc = "Show or hide the preview pane"
+
+# keymap.toml
+[[mgr.prepend_keymap]]
+on   = "T"
+run  = "plugin toggle-pane max-preview"
+desc = "Maximize or restore the preview pane"
+
+# keymap.toml
+[[mgr.prepend_keymap]]
+on  = "q"
+run = "plugin confirm-quit"
+desc = "Confirm on exit if multiple tabs are present"
+
+# keymap.toml
+[[mgr.prepend_keymap]]
+on = ["R","o"] 
+run = "plugin recycle-bin -- open"
+desc = "Open Trash"
+
+# keymap.toml
+[[mgr.prepend_keymap]]
+on = ["R","e"]
+run = "plugin recycle-bin -- empty"
+desc = "Empty Trash"
+    
+# keymap.toml
+[[mgr.prepend_keymap]]
+on = ["R","D"]
+run = "plugin recycle-bin -- emptyDays"
+desc = "Empty by days deleted"
+
+# keymap.toml
+[[mgr.prepend_keymap]]
+on = ["R","d"]
+run = "plugin recycle-bin -- delete"
+desc = "Delete from Trash"
+
+# keymap.toml
+[[mgr.prepend_keymap]]
+on = ["R","r"]
+run = "plugin recycle-bin -- restore"
+desc = "Restore from Trash"
