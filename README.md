@@ -14,5 +14,5 @@ stow */
 ## 2. Manually copy `.wezterm.lua` to your Windows's default user folder
 
 ```bash
-cp wezterm/.wezterm.lua /mnt/C/Users/Dev/<your_user_name>/.wezterm.lua
+cp wezterm/.wezterm.lua /mnt/C/Users/<your_user_name>/.wezterm.lua
 ```
