@@ -414,3 +414,6 @@ alias ham='task-master'
 
 # opencode
 export PATH=/home/eiat/.opencode/bin:$PATH
+
+# CODEX_HOME_PATH
+export CODEX_HOME=/mnt/c/Users/Dev/.codex

@@ -332,6 +332,6 @@ disabled = false
 [memory_usage]
 format = '\[[$symbol[${ram}](|${swap})]($style)\]' 
 disabled = false
-threshold = 51 
+threshold = 51
 symbol = "󰍛 "
 style = "bold dimmed white"
