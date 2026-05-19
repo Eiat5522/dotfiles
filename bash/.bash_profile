@@ -18,6 +18,32 @@ path_append() {
 	esac
 }
 
+# Optional PATH normalization:
+# - Set `PATH_CLEANUP_ENABLE=1` to enable.
+# - Set `PATH_CLEANUP_KEEP_MISSING=1` to keep entries that do not exist yet.
+path_normalize() {
+	local old_path="$1"
+	local entry cleaned=""
+	declare -A seen
+
+	IFS=':' read -r -a __path_parts <<<"$old_path"
+	for entry in "${__path_parts[@]}"; do
+		[ -n "$entry" ] || continue
+		[ "${seen[$entry]+_}" ] && continue
+		seen["$entry"]=1
+
+		if [ "${PATH_CLEANUP_KEEP_MISSING:-0}" = "1" ] || [ -d "$entry" ]; then
+			if [ -n "$cleaned" ]; then
+				cleaned="$cleaned:$entry"
+			else
+				cleaned="$entry"
+			fi
+		fi
+	done
+
+	PATH="$cleaned"
+}
+
 unset JAVA_HOME
 if [ -x /usr/lib/jvm/java-17-openjdk-amd64/bin/javac ]; then
 	export JAVA_HOME="/usr/lib/jvm/java-17-openjdk-amd64"
@@ -88,6 +114,9 @@ export BROWSER="$HOME/.local/bin/wsl-browser"
 
 # Load machine-local secrets outside the dotfiles repository.
 [ -f "$HOME/.bash_profile.local" ] && . "$HOME/.bash_profile.local"
+
+# Run optional PATH cleanup after all PATH mutations and local overrides.
+[ "${PATH_CLEANUP_ENABLE:-0}" = "1" ] && path_normalize "$PATH"
 
 # Startup programs should run once per interactive login session.
 case $- in
