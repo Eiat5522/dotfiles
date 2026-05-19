@@ -292,6 +292,7 @@ alias bat="batcat"
 #alias cat="batcat"
 
 # Enable bash completion, fzf, and ble.sh
+# shellcheck source=/dev/null
 [ -f /etc/bash_completion ] && source /etc/bash_completion
 # shellcheck source=/dev/null
 [ -f ~/.fzf.bash ] && source ~/.fzf.bash
