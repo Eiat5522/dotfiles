@@ -143,8 +143,8 @@ alias alert='notify-send --urgency=low -i "$([ $? = 0 ] && echo terminal || echo
 # ~/.bash_aliases, instead of adding them here directly.
 # See /usr/share/doc/bash-doc/examples in the bash-doc package.
 
-if [ -f ~/.bash_aliases ]; then
-	. ~/.bash_aliases
+if [ -f "$HOME/.bash_aliases" ]; then
+	. "$HOME/.bash_aliases"
 fi
 
 # enable programmable completion features (you don't need to enable
@@ -369,7 +369,7 @@ bind -x '"\em": fzf-nova'
 alias fzf-nova='/home/eiat/.local/share/fzf-nova/fzf-nova'
 
 # set default editor to LazyVim
-export EDITOR='vi'
+export EDITOR='lazy'
 
 # export LazyDocker PATH
 export PATH="$PATH:$HOME/.config/lazydocker_0.24.1_Linux_x86"
@@ -402,18 +402,34 @@ else
 	export PATH="$HOME/bin:$PATH"
 fi
 
-export PATH=$PATH:$HOME/.maestro/bin
+export PATH=$PATH:"$HOME/.maestro/bin"
 
-export PATH=$PATH:$HOME/.nvm/versions/node/v22.21.0/bin/mobilecli
+export PATH=$PATH:"$HOME/.nvm/versions/node/v22.21.0/bin/mobilecli"
 
-export PATH=$PATH:$HOME/.nvm/versions/node/v22.21.0/bin/copilot
-
-# Task Master aliases added on 3/13/2026
-alias hamster='task-master'
-alias ham='task-master'
+export PATH=$PATH:"$HOME/.nvm/versions/node/v22.21.0/bin/copilot"
 
 # opencode
 export PATH=/home/eiat/.opencode/bin:$PATH
 
+# CODEX bash completion
+eval "$(codex completion bash)"
+
 # CODEX_HOME_PATH
-export CODEX_HOME=/mnt/c/Users/Dev/.codex
+export CODEX_HOME="$HOME/.codex"
+# CODEX_CLI_HOME_PATH
+export CODEX_CLI_PATH="$HOME/.nvm/versions/node/v22.22.2/bin/codex"
+
+export PATH=$PATH:"$HOME/.nvm/versions/node/v22.22.2/bin/copilot"
+export PATH=$PATH:"$HOME/.local/bin/hermes"
+export PATH=$PATH:"$HOME/.opencode/bin/opencode"
+export PATH=$PATH:"$HOME/.local/share/pnpm/pi"
+
+# TINYFISH_API_KEY
+export TINYFISH_API_KEY="sk-tinyfish-g0KRika80vRYej1S-mPgg3iI10IRMgD8"
+
+# Global Environment Variable for WSL Browser
+export BROWSER="$HOME/.local/bin/wsl-browser"
+
+# >>> spawn >>>
+export PATH="/home/eiat/.bun/bin:$PATH"
+# <<< spawn <<<
