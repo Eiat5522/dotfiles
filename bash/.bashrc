@@ -2,18 +2,6 @@
 # see /usr/share/doc/bash/examples/startup-files (in the package bash-doc)
 # for examples
 
-# Load nvm for both interactive and non-interactive shells so npm resolves to
-# the Linux toolchain instead of the Windows shim when running under WSL.
-export NVM_DIR="$HOME/.nvm"
-[ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
-
-# Pin Bash sessions to JDK 17 for Android/Gradle tooling.
-export JAVA_HOME="/usr/lib/jvm/java-17-openjdk-amd64"
-case ":$PATH:" in
-*":$JAVA_HOME/bin:"*) ;;
-*) export PATH="$JAVA_HOME/bin:$PATH" ;;
-esac
-
 # If not running interactively, don't do anything else
 case $- in
 *i*) ;;
@@ -158,16 +146,7 @@ fi
 #  fi
 #fi
 
-# Start agent if not running
-pgrep -u "$USER" ssh-agent >/dev/null || eval "$(ssh-agent -s)" >/dev/null
-
-# Add key if not already loaded
-ssh-add -l >/dev/null 2>&1 || ssh-add ~/.ssh/id_ed25519 >/dev/null 2>&1
-
-[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion" # This loads nvm bash_completion
-
-# source cargo/env
-. "$HOME/.cargo/env"
+[ -s "${NVM_DIR:-$HOME/.nvm}/bash_completion" ] && \. "${NVM_DIR:-$HOME/.nvm}/bash_completion" # This loads nvm bash_completion
 
 # Yazi Shell Wrapper
 function y() {
@@ -177,10 +156,6 @@ function y() {
 	[ -n "$cwd" ] && [ "$cwd" != "$PWD" ] && builtin cd -- "$cwd"
 	rm -f -- "$tmp"
 }
-
-# Set nvim PATH
-export PATH="$PATH:$HOME/.config/nvim-linux-x86_64/bin"
-export PATH="$HOME/.local/bin/lvim:$PATH"
 
 # Alias for various NeoVim Distribution
 alias nvim-lazy="NVIM_APPNAME=LazyVim nvim"
@@ -211,12 +186,6 @@ bind '"\C-a": "nvims\C-j"'
 # Set up fzf key bindings and fuzzy completion
 
 #eval "$(fzf --bash)"
-
-export FZF_DEFAULT_COMMAND="fdfind --hidden --strip-cwd-prefix --exclude .git "
-export FZF_CTRL_T_COMMAND="$FZF_DEFAULT_COMMAND"
-export FZF_ALT_C_COMMAND="fdfind --type=d --hidden --strip-cwd-prefix --exclude .git "
-
-export FZF_DEFAULT_OPTS=" --height 50% --layout=default --border --color=hl:#2dd4bf"
 
 # export FZF_DEFAULT_OPTS='--color=bg+:#3F3F3F,bg:#4B4B4B,border:#6B6B6B,spinner:#98BC99,hl:#719872,fg:#D9D9D9,header:#719872,info:#BDBB72,pointer:#E12672,marker:#E17899,fg+:#D9D9D9,preview-bg:#3F3F3F,prompt:#98BEDE,hl+:#98BC99'
 
@@ -292,38 +261,8 @@ eval "$(zoxide init bash)"
 #You can use whatever you want as an alias, like for Mondays:
 #eval $(thefuck --alias FUCK)
 
-export PATH="/usr/.local/go/bin:$PATH"
-export PATH="$PATH:$HOME/.local/bin/env"
-export PATH="$PATH:$HOME/.local/bin"
-
-# Docker WSL2 Environment Variables
-export PATH=$PATH:/mnt/c/Users/Dev/AppData/Roaming/Code/User/globalStorage/ms-vscode-remote.remote-containers/cli-bin
-export PATH=/home/testuser/bin:$PATH
-export DOCKER_HOST=unix:///run/user/1000/docker.sock
-
-. "$HOME/.local/bin/env"
-
-# pnpm global bin
-if [ -z "${XDG_DATA_HOME}" ]; then
-	export PNPM_HOME="$HOME/.local/share/pnpm"
-else
-	export PNPM_HOME="$XDG_DATA_HOME/pnpm"
-fi
-case ":$PATH:" in
-*":$PNPM_HOME:"*) ;;
-*) export PATH="$PNPM_HOME:$PATH" ;;
-esac
-
 # Export GitHub environment variable
 # export GH_TOKEN='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'
-
-# Task Master PATH and aliases
-export PATH="$PATH:$HOME/.nvm/versions/node/v22.19.0/lib/node_modules/task-master-ai"
-
-# Flutter SDK PATH
-
-# export android studio PATH
-export PATH=$PATH:/home/eiat/android-studio/bin
 
 # Task Master aliases
 alias tm='task-master'
@@ -351,16 +290,9 @@ fi
 # Use bash-completion, if available, and avoid double-sourcing
 [ -f /usr/local/etc/bash_completion ] && . /usr/local/etc/bash_completion
 
-source "$HOME/.atuin/bin/env"
-
 [[ -f ~/.bash-preexec.sh ]] && source ~/.bash-preexec.sh
 
 eval "$(atuin init bash)"
-
-# ghcup-env
-[ -f "/home/eiat/.ghcup/env" ] && . "/home/eiat/.ghcup/env"
-
-export CCLSP_CONFIG_PATH="$HOME/.config/claude/cclsp.json"
 
 # add default keybinding for fzf-nova
 bind -x '"\em": fzf-nova'
@@ -368,68 +300,11 @@ bind -x '"\em": fzf-nova'
 # alias for fzf-nova
 alias fzf-nova='/home/eiat/.local/share/fzf-nova/fzf-nova'
 
-# set default editor to LazyVim
-export EDITOR='lazy'
-
-# export LazyDocker PATH
-export PATH="$PATH:$HOME/.config/lazydocker_0.24.1_Linux_x86"
-
-# Set JAVA_HOME for Android/Gradle with a JDK that includes javac
-unset JAVA_HOME
-if [ -x /usr/lib/jvm/java-17-openjdk-amd64/bin/javac ]; then
-	export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
-elif [ -x /usr/lib/jvm/default-java/bin/javac ]; then
-	export JAVA_HOME=/usr/lib/jvm/default-java
-fi
-
-if [ -n "${JAVA_HOME:-}" ]; then
-	export PATH="$JAVA_HOME/bin:$PATH"
-fi
-
 # WSL: use SDK stored on Windows D: drive
-unset ANDROID_HOME
-unset ANDROID_SDK_ROOT
-
-SDK_BASE="/mnt/d/Android/Sdk"
-if [ -d "$SDK_BASE" ]; then
-	export ANDROID_HOME="$SDK_BASE"
-	export ANDROID_SDK_ROOT="$SDK_BASE"
-	export PATH="$HOME/bin:$PATH:$ANDROID_HOME/platform-tools:$ANDROID_HOME/emulator:$ANDROID_HOME/cmdline-tools/latest/bin"
-
+if [ -d "/mnt/d/Android/Sdk" ]; then
 	# Alias to run Android emulator with Windows paths (required for WSL)
 	alias android-emulator='cd /mnt/d && ANDROID_SDK_ROOT="D:\Android\Sdk" ANDROID_HOME="D:\Android\Sdk" /mnt/d/Android/Sdk/emulator/emulator.exe'
-else
-	export PATH="$HOME/bin:$PATH"
 fi
-
-export PATH=$PATH:"$HOME/.maestro/bin"
-
-export PATH=$PATH:"$HOME/.nvm/versions/node/v22.21.0/bin/mobilecli"
-
-export PATH=$PATH:"$HOME/.nvm/versions/node/v22.21.0/bin/copilot"
-
-# opencode
-export PATH=/home/eiat/.opencode/bin:$PATH
 
 # CODEX bash completion
 eval "$(codex completion bash)"
-
-# CODEX_HOME_PATH
-export CODEX_HOME="$HOME/.codex"
-# CODEX_CLI_HOME_PATH
-export CODEX_CLI_PATH="$HOME/.nvm/versions/node/v22.22.2/bin/codex"
-
-export PATH=$PATH:"$HOME/.nvm/versions/node/v22.22.2/bin/copilot"
-export PATH=$PATH:"$HOME/.local/bin/hermes"
-export PATH=$PATH:"$HOME/.opencode/bin/opencode"
-export PATH=$PATH:"$HOME/.local/share/pnpm/pi"
-
-# TINYFISH_API_KEY
-export TINYFISH_API_KEY="sk-tinyfish-g0KRika80vRYej1S-mPgg3iI10IRMgD8"
-
-# Global Environment Variable for WSL Browser
-export BROWSER="$HOME/.local/bin/wsl-browser"
-
-# >>> spawn >>>
-export PATH="/home/eiat/.bun/bin:$PATH"
-# <<< spawn <<<
