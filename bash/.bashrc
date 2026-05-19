@@ -146,7 +146,18 @@ fi
 #  fi
 #fi
 
-[ -s "${NVM_DIR:-$HOME/.nvm}/bash_completion" ] && \. "${NVM_DIR:-$HOME/.nvm}/bash_completion" # This loads nvm bash_completion
+# Lazy-load NVM only on first use to keep interactive startup fast.
+load_nvm() {
+	unset -f nvm node npm npx
+	export NVM_DIR="${NVM_DIR:-$HOME/.nvm}"
+	[ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
+	[ -s "$NVM_DIR/bash_completion" ] && . "$NVM_DIR/bash_completion"
+}
+
+nvm() { load_nvm; nvm "$@"; }
+node() { load_nvm; node "$@"; }
+npm() { load_nvm; npm "$@"; }
+npx() { load_nvm; npx "$@"; }
 
 # Yazi Shell Wrapper
 function y() {
@@ -202,16 +213,16 @@ bind '"\C-a": "nvims\C-j"'
 
 # FZF with Git right in the shell by Junegunn : check out his github below
 # Keymaps for this is available at https://github.com/junegunn/fzf-git.sh
-source ~/scripts/fzf-git.sh
+[ -f "$HOME/scripts/fzf-git.sh" ] && source "$HOME/scripts/fzf-git.sh"
 
 # fzf
 # called from ~/scripts/
-alias nlof="~/scripts/fzf_listoldfiles.sh"
+alias nlof="$HOME/scripts/fzf_listoldfiles.sh"
 # opens documentation through fzf (eg: git,zsh etc.)
 alias fman="compgen -c | fzf | xargs man"
 
 # zoxide (called from ~/scripts/)
-alias nzo="~/scripts/zoxide_openfiles_nvim.sh"
+alias nzo="$HOME/scripts/zoxide_openfiles_nvim.sh"
 
 # Existing Configuration for Starship
 #STARSHIP_CONFIG='~/.config/starship.toml'
@@ -243,7 +254,7 @@ if [[ "$TERM_PROGRAM" == "vscode" ]]; then
 else
 	# Normal terminals: use Starship
 	export STARSHIP_CONFIG="$HOME/.config/starship.toml"
-	eval "$(starship init bash)"
+	command -v starship &>/dev/null && eval "$(starship init bash)"
 fi
 
 ######################  Starship Presents  #########################
@@ -254,7 +265,7 @@ fi
 
 # Zoxide Configuration
 
-eval "$(zoxide init bash)"
+command -v zoxide &>/dev/null && eval "$(zoxide init bash)"
 
 #Configuration for thefuck
 #eval $(thefuck --alias)
@@ -292,7 +303,7 @@ fi
 
 [[ -f ~/.bash-preexec.sh ]] && source ~/.bash-preexec.sh
 
-eval "$(atuin init bash)"
+command -v atuin &>/dev/null && eval "$(atuin init bash)"
 
 # add default keybinding for fzf-nova
 bind -x '"\em": fzf-nova'
@@ -307,4 +318,4 @@ if [ -d "/mnt/d/Android/Sdk" ]; then
 fi
 
 # CODEX bash completion
-eval "$(codex completion bash)"
+command -v codex &>/dev/null && eval "$(codex completion bash)"
