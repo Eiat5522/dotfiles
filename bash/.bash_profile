@@ -1,6 +1,7 @@
 # ~/.bash_profile: executed for login shells.
 
 # Reuse ~/.profile when present for compatibility with other tools.
+# shellcheck source=/dev/null
 [ -f "$HOME/.profile" ] && . "$HOME/.profile"
 
 # PATH helpers (idempotent).
@@ -52,9 +53,13 @@ elif [ -x /usr/lib/jvm/default-java/bin/javac ]; then
 fi
 [ -n "${JAVA_HOME:-}" ] && path_prepend "$JAVA_HOME/bin"
 
+# shellcheck source=/dev/null
 [ -f "$HOME/.atuin/bin/env" ] && . "$HOME/.atuin/bin/env"
+# shellcheck source=/dev/null
 [ -f "$HOME/.local/bin/env" ] && . "$HOME/.local/bin/env"
+# shellcheck source=/dev/null
 [ -f "$HOME/.cargo/env" ] && . "$HOME/.cargo/env"
+# shellcheck source=/dev/null
 [ -f "$HOME/.ghcup/env" ] && . "$HOME/.ghcup/env"
 
 path_prepend "$HOME/.opencode/bin"
@@ -113,6 +118,7 @@ export CODEX_CLI_PATH="$HOME/.nvm/versions/node/v22.22.2/bin/codex"
 export BROWSER="$HOME/.local/bin/wsl-browser"
 
 # Load machine-local secrets outside the dotfiles repository.
+# shellcheck source=/dev/null
 [ -f "$HOME/.bash_profile.local" ] && . "$HOME/.bash_profile.local"
 
 # Run optional PATH cleanup after all PATH mutations and local overrides.

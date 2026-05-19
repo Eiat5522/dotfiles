@@ -73,7 +73,11 @@ esac
 
 # enable color support of ls and also add handy aliases
 if [ -x /usr/bin/dircolors ]; then
-	test -r ~/.dircolors && eval "$(dircolors -b ~/.dircolors)" || eval "$(dircolors -b)"
+	if test -r ~/.dircolors; then
+		eval "$(dircolors -b ~/.dircolors)"
+	else
+		eval "$(dircolors -b)"
+	fi
 	alias ls='ls --color=auto'
 	#alias dir='dir --color=auto'
 	#alias vdir='vdir --color=auto'
@@ -150,7 +154,9 @@ fi
 load_nvm() {
 	unset -f nvm node npm npx
 	export NVM_DIR="${NVM_DIR:-$HOME/.nvm}"
+	# shellcheck source=/dev/null
 	[ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
+	# shellcheck source=/dev/null
 	[ -s "$NVM_DIR/bash_completion" ] && . "$NVM_DIR/bash_completion"
 }
 
@@ -161,10 +167,11 @@ npx() { load_nvm; npx "$@"; }
 
 # Yazi Shell Wrapper
 function y() {
-	local tmp="$(mktemp -t "yazi-cwd.XXXXXX")" cwd
+	local tmp cwd
+	tmp="$(mktemp -t "yazi-cwd.XXXXXX")"
 	yazi "$@" --cwd-file="$tmp"
 	IFS= read -r -d '' cwd <"$tmp"
-	[ -n "$cwd" ] && [ "$cwd" != "$PWD" ] && builtin cd -- "$cwd"
+	[ -n "$cwd" ] && [ "$cwd" != "$PWD" ] && builtin cd -- "$cwd" || return
 	rm -f -- "$tmp"
 }
 
@@ -190,7 +197,7 @@ function nvims() {
 		"$HOME/.local/bin/lvim" "$@"
 		return 0
 	fi
-	NVIM_APPNAME=$config nvim $@
+	NVIM_APPNAME=$config nvim "$@"
 }
 bind '"\C-a": "nvims\C-j"'
 
@@ -213,16 +220,17 @@ bind '"\C-a": "nvims\C-j"'
 
 # FZF with Git right in the shell by Junegunn : check out his github below
 # Keymaps for this is available at https://github.com/junegunn/fzf-git.sh
+# shellcheck source=/dev/null
 [ -f "$HOME/scripts/fzf-git.sh" ] && source "$HOME/scripts/fzf-git.sh"
 
 # fzf
 # called from ~/scripts/
-alias nlof="$HOME/scripts/fzf_listoldfiles.sh"
+alias nlof='$HOME/scripts/fzf_listoldfiles.sh'
 # opens documentation through fzf (eg: git,zsh etc.)
 alias fman="compgen -c | fzf | xargs man"
 
 # zoxide (called from ~/scripts/)
-alias nzo="$HOME/scripts/zoxide_openfiles_nvim.sh"
+alias nzo='$HOME/scripts/zoxide_openfiles_nvim.sh'
 
 # Existing Configuration for Starship
 #STARSHIP_CONFIG='~/.config/starship.toml'
@@ -236,7 +244,7 @@ if [[ "$TERM_PROGRAM" == "vscode" ]]; then
 
 	# Emit OSC 7 so VS Code tracks the current working directory (CWD)
 	__vscode_osc7() {
-		printf '\033]7;file://localhost%s\033\\' "$PWD"
+		printf $'\033]7;file://localhost%s\033\\' "$PWD"
 	}
 
 	# Ensure OSC 7 is emitted before each prompt
@@ -285,22 +293,28 @@ alias bat="batcat"
 
 # Enable bash completion, fzf, and ble.sh
 [ -f /etc/bash_completion ] && source /etc/bash_completion
+# shellcheck source=/dev/null
 [ -f ~/.fzf.bash ] && source ~/.fzf.bash
+# shellcheck source=/dev/null
 [ -f ~/.local/share/blesh/ble.sh ] && source ~/.local/share/blesh/ble.sh
 
 # Enable wezterm CLI completion
 if command -v wezterm &>/dev/null; then
+	# shellcheck source=/dev/null
 	source <(wezterm shell-completion --shell bash)
 fi
 
 # Enable wezterm shell integration
 if [ -f ~/.local/share/wezterm/wezterm.sh ]; then
+	# shellcheck source=/dev/null
 	. ~/.local/share/wezterm/wezterm.sh
 fi
 
 # Use bash-completion, if available, and avoid double-sourcing
+# shellcheck source=/dev/null
 [ -f /usr/local/etc/bash_completion ] && . /usr/local/etc/bash_completion
 
+# shellcheck source=/dev/null
 [[ -f ~/.bash-preexec.sh ]] && source ~/.bash-preexec.sh
 
 command -v atuin &>/dev/null && eval "$(atuin init bash)"
