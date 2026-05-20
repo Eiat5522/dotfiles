@@ -222,6 +222,13 @@ __bashrc_auto_nvmrc() {
 			__bashrc_nvm_auto_active=1
 		fi
 	elif [[ -n ${__bashrc_nvm_auto_active-} ]]; then
+		load_nvm
+		local default_version current_version
+		default_version="$(nvm version default)"
+		current_version="$(nvm version)"
+		if [[ $current_version != "$default_version" ]]; then
+			nvm use default
+		fi
 		unset __bashrc_nvm_auto_active
 	fi
 }
