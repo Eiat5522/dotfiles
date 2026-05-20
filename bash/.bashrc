@@ -1,3 +1,4 @@
+# shellcheck shell=bash
 # ~/.bashrc: executed by bash(1) for non-login shells.
 # see /usr/share/doc/bash/examples/startup-files (in the package bash-doc)
 # for examples
@@ -7,6 +8,21 @@ case $- in
 *i*) ;;
 *) return ;;
 esac
+
+# Keep fzf available without eagerly evaluating its shell integration.
+if [[ -d "$HOME/.config/.fzf/bin" && ":$PATH:" != *":$HOME/.config/.fzf/bin:"* ]]; then
+	export PATH="${PATH:+${PATH}:}$HOME/.config/.fzf/bin"
+fi
+
+# Load ble.sh early and attach late, per upstream startup guidance.
+if [[ -f "$HOME/.local/share/blesh/ble.sh" ]]; then
+	__bashrc_blesh_configured=1
+	# shellcheck source=/dev/null
+	source -- "$HOME/.local/share/blesh/ble.sh" --attach=none --rcfile "$HOME/.dotfiles/bash/.blerc"
+	if declare -F ble-attach >/dev/null; then
+		__bashrc_blesh_loaded=1
+	fi
+fi
 
 # don't put duplicate lines or lines starting with space in the history.
 # See bash(1) for more options
@@ -293,11 +309,19 @@ alias bat="batcat"
 
 # Enable bash completion, fzf, and ble.sh
 # shellcheck source=/dev/null
-[ -f /etc/bash_completion ] && source /etc/bash_completion
-# shellcheck source=/dev/null
-[ -f ~/.fzf.bash ] && source ~/.fzf.bash
-# shellcheck source=/dev/null
-[ -f ~/.local/share/blesh/ble.sh ] && source ~/.local/share/blesh/ble.sh
+if [[ -z ${BASH_COMPLETION_VERSINFO-} && -f /etc/bash_completion ]]; then
+	source /etc/bash_completion
+elif [[ -z ${BASH_COMPLETION_VERSINFO-} && -f /usr/local/etc/bash_completion ]]; then
+	# shellcheck source=/dev/null
+	source /usr/local/etc/bash_completion
+fi
+
+# ble.sh handles fzf integration from ~/.dotfiles/bash/.blerc. Fall back to
+# the stock fzf script only if ble.sh did not load in a real terminal.
+if [[ -z ${__bashrc_blesh_loaded-} && -t 0 && -t 1 && -f ~/.fzf.bash ]]; then
+	# shellcheck source=/dev/null
+	source ~/.fzf.bash
+fi
 
 # Enable wezterm CLI completion
 if command -v wezterm &>/dev/null; then
@@ -311,14 +335,15 @@ if [ -f ~/.local/share/wezterm/wezterm.sh ]; then
 	. ~/.local/share/wezterm/wezterm.sh
 fi
 
-# Use bash-completion, if available, and avoid double-sourcing
-# shellcheck source=/dev/null
-[ -f /usr/local/etc/bash_completion ] && . /usr/local/etc/bash_completion
-
 # shellcheck source=/dev/null
 [[ -f ~/.bash-preexec.sh ]] && source ~/.bash-preexec.sh
 
 command -v atuin &>/dev/null && eval "$(atuin init bash)"
+
+if declare -F ble-attach >/dev/null; then
+	ble-attach
+fi
+unset __bashrc_blesh_configured __bashrc_blesh_loaded
 
 # add default keybinding for fzf-nova
 bind -x '"\em": fzf-nova'

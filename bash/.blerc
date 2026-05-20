@@ -1,0 +1,14 @@
+# shellcheck shell=bash
+# ble.sh runtime tuning and deferred integrations.
+
+bleopt history_lazyload=1
+bleopt complete_auto_delay=150
+bleopt complete_timeout_auto=500
+bleopt complete_timeout_compvar=100
+bleopt highlight_timeout_sync=20
+bleopt highlight_eval_word_limit=20
+
+# fzf completion must be layered after bash-completion; -d moves the work off
+# the prompt-critical startup path.
+ble-import -d integration/fzf-completion
+ble-import -d integration/fzf-key-bindings
