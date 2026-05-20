@@ -168,18 +168,84 @@ fi
 
 # Lazy-load NVM only on first use to keep interactive startup fast.
 load_nvm() {
+	[[ -n ${__bashrc_nvm_loaded-} ]] && return 0
 	unset -f nvm node npm npx
 	export NVM_DIR="${NVM_DIR:-$HOME/.nvm}"
 	# shellcheck source=/dev/null
 	[ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
 	# shellcheck source=/dev/null
 	[ -s "$NVM_DIR/bash_completion" ] && . "$NVM_DIR/bash_completion"
+	__bashrc_nvm_loaded=1
 }
 
 nvm() { load_nvm; nvm "$@"; }
 node() { load_nvm; node "$@"; }
 npm() { load_nvm; npm "$@"; }
 npx() { load_nvm; npx "$@"; }
+
+__bashrc_find_nvmrc() {
+	local dir=$PWD
+
+	while [[ $dir != / ]]; do
+		if [[ -f "$dir/.nvmrc" ]]; then
+			printf '%s\n' "$dir/.nvmrc"
+			return 0
+		fi
+		dir=${dir%/*}
+	done
+
+	return 1
+}
+
+__bashrc_auto_nvmrc() {
+	[[ $PWD == "${__bashrc_nvm_auto_pwd-}" ]] && return 0
+	__bashrc_nvm_auto_pwd=$PWD
+
+	local nvmrc_path nvmrc_value nvmrc_node_version current_node_version
+	nvmrc_path="$(__bashrc_find_nvmrc)" || nvmrc_path=
+
+	if [[ -n $nvmrc_path ]]; then
+		IFS= read -r nvmrc_value <"$nvmrc_path" || nvmrc_value=
+		[[ -n $nvmrc_value ]] || return 0
+
+		load_nvm
+		nvmrc_node_version="$(nvm version "$nvmrc_value")"
+		current_node_version="$(nvm version)"
+
+		if [[ $nvmrc_node_version == "N/A" ]]; then
+			nvm install
+		elif [[ $nvmrc_node_version != "$current_node_version" ]]; then
+			nvm use
+		fi
+		__bashrc_nvm_auto_active=1
+	elif [[ -n ${__bashrc_nvm_auto_active-} ]]; then
+		load_nvm
+		if [[ "$(nvm version)" != "$(nvm version default)" ]]; then
+			echo "Reverting to nvm default version"
+			nvm use default
+		fi
+		unset __bashrc_nvm_auto_active
+	fi
+}
+
+__bashrc_add_prompt_command() {
+	local hook=$1 prompt_command_decl existing_hook
+	prompt_command_decl="$(declare -p PROMPT_COMMAND 2>/dev/null || true)"
+
+	if [[ $prompt_command_decl == declare\ -*a* ]]; then
+		for existing_hook in "${PROMPT_COMMAND[@]}"; do
+			[[ $existing_hook == "$hook" ]] && return 0
+		done
+		PROMPT_COMMAND+=("$hook")
+	elif [[ -n ${PROMPT_COMMAND-} ]]; then
+		case "; $PROMPT_COMMAND; " in
+		*"; $hook; "*) ;;
+		*) PROMPT_COMMAND="$PROMPT_COMMAND; $hook" ;;
+		esac
+	else
+		PROMPT_COMMAND=$hook
+	fi
+}
 
 # Yazi Shell Wrapper
 function y() {
@@ -339,6 +405,10 @@ fi
 [[ -f ~/.bash-preexec.sh ]] && source ~/.bash-preexec.sh
 
 command -v atuin &>/dev/null && eval "$(atuin init bash)"
+
+__bashrc_add_prompt_command __bashrc_auto_nvmrc
+__bashrc_auto_nvmrc
+unset -f __bashrc_add_prompt_command
 
 if declare -F ble-attach >/dev/null; then
 	ble-attach
