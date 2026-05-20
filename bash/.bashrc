@@ -192,59 +192,53 @@ __bashrc_find_nvmrc() {
 			return 0
 		fi
 		dir=${dir%/*}
+		[[ -n $dir ]] || dir=/
 	done
 
 	return 1
 }
 
 __bashrc_auto_nvmrc() {
+	[[ -n ${__bashrc_nvm_auto_running-} ]] && return 0
 	[[ $PWD == "${__bashrc_nvm_auto_pwd-}" ]] && return 0
 	__bashrc_nvm_auto_pwd=$PWD
 
 	local nvmrc_path nvmrc_value nvmrc_node_version current_node_version
+	local __bashrc_nvm_auto_running=1
 	nvmrc_path="$(__bashrc_find_nvmrc)" || nvmrc_path=
 
 	if [[ -n $nvmrc_path ]]; then
 		IFS= read -r nvmrc_value <"$nvmrc_path" || nvmrc_value=
-		[[ -n $nvmrc_value ]] || return 0
+		if [[ -n $nvmrc_value ]]; then
+			load_nvm
+			nvmrc_node_version="$(nvm version "$nvmrc_value")"
+			current_node_version="$(nvm version)"
 
-		load_nvm
-		nvmrc_node_version="$(nvm version "$nvmrc_value")"
-		current_node_version="$(nvm version)"
-
-		if [[ $nvmrc_node_version == "N/A" ]]; then
-			nvm install
-		elif [[ $nvmrc_node_version != "$current_node_version" ]]; then
-			nvm use
+			if [[ $nvmrc_node_version == "N/A" ]]; then
+				nvm install
+			elif [[ $nvmrc_node_version != "$current_node_version" ]]; then
+				nvm use
+			fi
+			__bashrc_nvm_auto_active=1
 		fi
-		__bashrc_nvm_auto_active=1
 	elif [[ -n ${__bashrc_nvm_auto_active-} ]]; then
-		load_nvm
-		if [[ "$(nvm version)" != "$(nvm version default)" ]]; then
-			echo "Reverting to nvm default version"
-			nvm use default
-		fi
 		unset __bashrc_nvm_auto_active
 	fi
 }
 
-__bashrc_add_prompt_command() {
-	local hook=$1 prompt_command_decl existing_hook
-	prompt_command_decl="$(declare -p PROMPT_COMMAND 2>/dev/null || true)"
+cd() {
+	builtin cd "$@" || return
+	__bashrc_auto_nvmrc
+}
 
-	if [[ $prompt_command_decl == declare\ -*a* ]]; then
-		for existing_hook in "${PROMPT_COMMAND[@]}"; do
-			[[ $existing_hook == "$hook" ]] && return 0
-		done
-		PROMPT_COMMAND+=("$hook")
-	elif [[ -n ${PROMPT_COMMAND-} ]]; then
-		case "; $PROMPT_COMMAND; " in
-		*"; $hook; "*) ;;
-		*) PROMPT_COMMAND="$PROMPT_COMMAND; $hook" ;;
-		esac
-	else
-		PROMPT_COMMAND=$hook
-	fi
+pushd() {
+	builtin pushd "$@" || return
+	__bashrc_auto_nvmrc
+}
+
+popd() {
+	builtin popd "$@" || return
+	__bashrc_auto_nvmrc
 }
 
 # Yazi Shell Wrapper
@@ -406,9 +400,7 @@ fi
 
 command -v atuin &>/dev/null && eval "$(atuin init bash)"
 
-__bashrc_add_prompt_command __bashrc_auto_nvmrc
-__bashrc_auto_nvmrc
-unset -f __bashrc_add_prompt_command
+__bashrc_nvm_auto_pwd=$PWD
 
 if declare -F ble-attach >/dev/null; then
 	ble-attach
