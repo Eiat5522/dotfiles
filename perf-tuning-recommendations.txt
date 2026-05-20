@@ -1,0 +1,307 @@
+# Best Practices for Optimizing ble.sh, bash-completion, and fzf for Bash Shell Startup and Responsiveness
+
+**Baseline:** `time source ~/.bashrc` = `10.910s`  
+ **Target:** get back as close as possible to `2.144s` while keeping **ble.sh**, **bash-completion**, and **fzf** enabled.
+
+## Executive Summary
+
+Your `10.910s -> 2.144s` experiment shows that the **combined startup bundle** around ble.sh, bash-completion, and fzf is expensive in your current setup, but it does **not** by itself prove which one is the dominant cause.[^1] The most defensible first moves are to reduce **eager startup work** before tuning interactive behavior: keep ble.sh on its official two-phase init path, make sure bash-completion stays on its lazy-loading path instead of eagerly loading custom files, and defer fzf integration if you are using ble.sh.[^2][^3][^4]
+
+The biggest startup hazards are usually **bash-completion compat/user files loaded eagerly**, **non-deferred fzf shell integration**, and **custom history/prompt logic that forces extra file I/O**.[^3][^5] By contrast, many ble.sh knobs such as `complete_auto_delay` and `highlight_timeout_sync` mostly improve **interactive typing/completion responsiveness**, not raw `source ~/.bashrc` time.[^6]
+
+The recommended path is therefore:
+
+1.  **Fix startup-path loading first**: guarded bash-completion sourcing, compatdir/user-file cleanup, official ble.sh two-phase init, correct load order, deferred fzf via blesh-contrib if using ble.sh.[^2][^3][^4]
+2.  **Then tune runtime responsiveness**: ble.sh completion/highlighting/history behavior and fzf traversal/preview defaults.[^6][^7]
+
+---
+
+## What Matters for Startup vs. What Matters for Runtime Latency
+
+### Startup time (`time source ~/.bashrc`)
+
+These are the main startup-path risks:
+
+| Component             | Startup risk                                                                                        |
+| --------------------- | --------------------------------------------------------------------------------------------------- |
+| **ble.sh**            | Initial `source ble.sh`, attach timing, history loading, custom prompt/history hooks[^2][^5]        |
+| **bash-completion**   | Eager sourcing of compatdir and `~/.bash_completion` / user file[^3]                                |
+| **fzf**               | Shell integration setup; `eval "$(fzf --bash)"` forks the binary once per shell start[^8]           |
+| **Custom shell code** | `history -r` in `PROMPT_COMMAND`, slow path scans, package-manager lookups, subshell-heavy init[^5] |
+
+### Runtime / interactive latency
+
+These usually affect **typing**, **completion**, and **widgets after the shell is already open**:
+
+| Component           | Runtime risk                                                                                  |
+| ------------------- | --------------------------------------------------------------------------------------------- |
+| **ble.sh**          | syntax highlighting, auto-complete delay/aggressiveness, history dedup/share behavior[^6][^9] |
+| **bash-completion** | expensive per-command completion functions and old compatibility code paths[^10]              |
+| **fzf**             | previews, global heavy defaults, broad traversal, large history/file inputs[^7][^11]          |
+
+> **Important:** a setting can be valuable without helping both categories. For example, `no_empty_cmd_completion` is useful for interactive completion behavior but is not a primary startup optimization.[^12]
+
+---
+
+## ble.sh Best Practices
+
+### 1. Use the official two-phase init
+
+ble.sh upstream recommends loading early with `--attach=none` and attaching later with `ble-attach`.[^2]
+
+```bash
+# top of ~/.bashrc
+[[ $- == *i* ]] && source -- "$HOME/.local/share/blesh/ble.sh" --attach=none
+
+# ... rest of your ~/.bashrc ...
+
+# bottom of ~/.bashrc
+[[ ${BLE_VERSION-} ]] && ble-attach
+
+This is the safest default for startup because it separates library loading from terminal attach/readline takeover.[^2]
+
+2. Treat ble.sh tuning as a menu of levers, not an official ranked list
+
+These options are real and useful, but they solve different problems.[^6][^9]
+
+Startup-leaning lever
+
+bleopt history_lazyload=1
+
+This keeps history loading deferred instead of doing unnecessary file work on the startup path.[^9]
+
+Runtime / perceived-latency levers
+
+bleopt complete_auto_delay=150
+bleopt complete_timeout_auto=500
+bleopt complete_timeout_compvar=100
+bleopt highlight_timeout_sync=20
+bleopt highlight_eval_word_limit=20
+
+These reduce per-keystroke and per-completion blocking, especially on slower systems or large repos.[^6]
+
+History behavior levers
+
+bleopt history_share=1
+bleopt history_erasedups_limit=2000
+
+These can help in some setups, but they are behavioral/history semantics knobs as much as performance knobs, so they should be adopted intentionally, not blindly.[^9]
+
+3. Avoid history -r in PROMPT_COMMAND
+
+If you have history -r or similar history reload logic in PROMPT_COMMAND, it can add repeated file I/O and undo ble.sh’s own history handling optimizations.[^5]
+
+----------------------------------------------------------------------------------------------------------------------
+
+bash-completion Best Practices
+
+1. Keep bash-completion on its lazy-loading path
+
+bash-completion 2.x is designed to lazy-load command-specific completions through:
+
+complete -D -F _comp_complete_load
+
+That means per-command files in completions/ are supposed to load on first use, not at shell startup.[^3]
+
+2. Guard the main source call
+
+Use an interactive + double-source guard with BASH_COMPLETION_VERSINFO.[^3]
+
+[[ $PS1 &&
+  ! ${BASH_COMPLETION_VERSINFO:-} &&
+  -f /usr/share/bash-completion/bash_completion ]] &&
+  . /usr/share/bash-completion/bash_completion
+
+This prevents accidental double-loading, which is a common config mistake.[^3]
+
+3. Move heavy custom logic out of eager-loaded locations
+
+The two big eager-loaded traps are:
+
+1. compatdir (for example /etc/bash_completion.d)
+2. ~/.bash_completion or the user file[^3]
+
+If heavy custom completion code lives there, it runs on every shell startup. The better home is command-named files under:
+
+~/.local/share/bash-completion/completions/
+
+Those are lazy-loaded on first use instead.[^4]
+
+4. Audit compatdir first
+
+If your system or dotfiles have a lot in compatdir, that is one of the highest-probability startup wins.[^3]
+
+5. Optional runtime tweak
+
+shopt -s no_empty_cmd_completion
+
+Useful if empty-line completion is expensive on your system, but this is more about interactive behavior than startup time.[^12]
+
+----------------------------------------------------------------------------------------------------------------------
+
+fzf Best Practices
+
+1. Do not overstate eval "$(fzf --bash)" as the core problem
+
+Upstream’s primary integration method is still:
+
+eval "$(fzf --bash)"
+
+That does fork the fzf binary once per shell startup, so sourcing static generated files can be a valid optional refinement, but it is unlikely to explain an 8-second gap by itself.[^8][^13]
+
+2. Keep global defaults light
+
+Do not put expensive preview/default behavior into FZF_DEFAULT_OPTS globally if it only makes sense for one widget.[^7]
+
+Bad pattern:
+
+export FZF_DEFAULT_OPTS='--preview "bat --style=numbers --color=always {}"'
+
+Better pattern:
+
+export FZF_CTRL_T_OPTS='--preview "bat -n --color=always {}" --bind "ctrl-/:change-preview-window(down|hidden|)"'
+export FZF_CTRL_R_OPTS='--scheme=history'
+
+3. Use traversal tuning only if traversal is actually the bottleneck
+
+Good candidates if file scanning is slow:
+
+- --walker-skip
+- binding-specific commands
+- custom compgen functions
+- fd-based generation if your defaults are too broad[^11]
+
+Examples:
+
+export FZF_CTRL_T_OPTS='--walker-skip .git,node_modules,target,.cache'
+
+or, if you really need it:
+
+export FZF_CTRL_T_COMMAND='fd --type f --type d --hidden --exclude .git --strip-cwd-prefix'
+
+The safest recommendation is consider this if traversal is the bottleneck, not “always switch to fd”.[^11]
+
+4. Disable unused bindings
+
+If you do not use a widget, don’t keep paying for it conceptually in your setup.[^8]
+
+----------------------------------------------------------------------------------------------------------------------
+
+Recommended Combined Load Order
+
+If you are using ble.sh + bash-completion + fzf, the most defensible order is:
+
+1. ble.sh early init (--attach=none)[^2]
+2. bash-completion with the proper guard[^3]
+3. rest of shell config
+4. ble-attach near the bottom[^2]
+5. fzf via blesh-contrib deferred imports if using ble.sh[^4]
+
+Why this order?
+
+- ble.sh wants the official early-init / late-attach split.[^2]
+- bash-completion should already be loaded before fzf completion logic is layered on top.[^4]
+- With ble.sh, fzf integration is best done through blesh-contrib wrappers rather than raw fzf scripts, and the deferred ble-import -d path moves that work off the critical prompt path.[^4]
+
+Example
+
+# ~/.bashrc
+
+[[ $- == *i* ]] || return
+
+# 1. ble.sh early init
+[[ -f "$HOME/.local/share/blesh/ble.sh" ]] &&
+  source -- "$HOME/.local/share/blesh/ble.sh" --attach=none
+
+# 2. bash-completion
+[[ $PS1 &&
+  ! ${BASH_COMPLETION_VERSINFO:-} &&
+  -f /usr/share/bash-completion/bash_completion ]] &&
+  . /usr/share/bash-completion/bash_completion
+
+# 3. your normal shell config
+# aliases, PATH, exports, prompt vars, etc.
+
+# 4. ble.sh attach late
+[[ ${BLE_VERSION-} ]] && ble-attach
+
+And then in ~/.blerc:
+
+ble-import -d integration/fzf-completion
+ble-import -d integration/fzf-key-bindings
+
+----------------------------------------------------------------------------------------------------------------------
+
+Prioritized Action Plan to Approach the 2.144s Goal
+
+Top 5 recommendations
+
+1. Profile by component before ranking blame.
+Your
+ 10.9s -> 2.14s result proves the combined bundle is expensive, but not whether ble.sh, bash-completion, fzf, or your surrounding shell code is dominant.[^1]
+2. Fix bash-completion eager loading first.
+Audit compatdir and ~/.bash_completion, then move heavy custom logic into completions/ so it becomes lazy-loaded.[^3][^4]
+3. Use ble.sh’s official two-phase init.
+--attach=none early, ble-attach late.[^2]
+4. If using ble.sh with fzf, defer fzf via blesh-contrib.
+Use ble-import -d integration/fzf-completion and ble-import -d integration/fzf-key-bindings instead of treating fzf integration as ordinary eager startup code.[^4]
+5. Only after startup is cleaner, tune runtime behavior.
+Then adjust ble.sh completion/highlighting/history behavior and keep fzf globals light.[^6][^7]
+
+Practical sequence
+
+Phase 1 — Startup-path cleanup
+
+1. Add the guarded bash-completion source line.[^3]
+2. Audit /etc/bash_completion.d, ~/.bash_completion, and custom completion snippets.[^3][^4]
+3. Confirm ble.sh is using --attach=none / ble-attach properly.[^2]
+4. Move fzf integration to deferred blesh-contrib imports if you are on ble.sh.[^4]
+
+Phase 2 — Runtime/perceived responsiveness
+
+1. Enable history_lazyload=1.[^9]
+2. Set a modest complete_auto_delay.[^6]
+3. Lower highlight sync cost if typing feels sticky.[^6]
+4. Keep previews and traversal customizations widget-specific in fzf.[^7][^11]
+
+----------------------------------------------------------------------------------------------------------------------
+
+Confidence Assessment
+
+High confidence
+
+- ble.sh should use the official two-phase init.[^2]
+- bash-completion lazy-loads per-command completions via complete -D -F _comp_complete_load.[^3]
+- compatdir and ~/.bash_completion / user file are eager-loading hazards.[^3]
+- bash-completion should be loaded before fzf completion.[^4]
+- fzf global defaults should stay light, with heavier behavior moved into binding-specific options.[^7]
+
+Medium confidence / depends on your config
+
+- How much fzf startup alone contributes in your shell.
+- Whether history_share helps or hurts your specific workflow/performance balance.
+- Whether traversal customization (fd, --walker-skip) is necessary in your case.[^9][^11]
+
+Explicitly inferred / not proven by your timing alone
+
+- Which of ble.sh, bash-completion, or fzf contributes the largest share of the
+ 8.7s delta.[^1]
+
+----------------------------------------------------------------------------------------------------------------------
+
+Footnotes
+
+[^1]: Your timing experiment (10.910s with the bundle vs 2.144s with the relevant lines disabled) isolates the combined effect of that block, not the dominant individual contributor.
+[^2]: akinomyoga/ble.sh:README.md setup section for .bashrc with --attach=none / ble-attach — https://github.com/akinomyoga/ble.sh/blob/master/README.md#13-set-up-bashrc
+[^3]: scop/bash-completion:bash_completion lazy loader and startup config handling; README.md install/FAQ guidance — https://github.com/scop/bash-completion/blob/main/README.md
+[^4]: akinomyoga/ble.sh:README.md note that bash-completion must be loaded before fzf-completion, plus deferred ble-import -d guidance for fzf integration — https://github.com/akinomyoga/ble.sh/blob/master/README.md
+[^5]: Research synthesis from ble.sh issue/wiki findings on history reload behavior and prompt/history overhead in real-world configs.
+[^6]: akinomyoga/ble.sh:blerc.template, manual, and Q&A coverage of complete_auto_delay, complete_timeout_*, highlight_timeout_sync, and highlight_eval_word_limit.
+[^7]: junegunn/fzf:README.md performance guidance, especially around previews and widget-specific options — https://github.com/junegunn/fzf/blob/master/README.md
+[^8]: junegunn/fzf:README.md shell integration guidance showing eval "$(fzf --bash)" as the standard method — https://github.com/junegunn/fzf/blob/master/README.md#setting-up-shell-integration
+[^9]: ble.sh manual/template coverage of history_lazyload, history_share, and history_erasedups_limit.
+[^10]: scop/bash-completion:bash_completion.d/000_bash_completion_compat.bash and upstream guidance on deprecated compatibility layers.
+[^11]: junegunn/fzf README/man/changelog guidance on traversal options, --walker-skip, and custom compgen/command usage.
+[^12]: scop/bash-completion:doc/configuration.md documentation for no_empty_cmd_completion.
+[^13]: GPT-5.4 review correction: static sourcing for fzf is a valid optional refinement, but should not be presented as the primary explanation for a multi-second startup regression.
+```
