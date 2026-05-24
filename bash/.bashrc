@@ -210,7 +210,14 @@ __bashrc_auto_nvmrc() {
 
 	if [[ -n $nvmrc_path ]]; then
 		IFS= read -r nvmrc_value <"$nvmrc_path" || nvmrc_value=
+		nvmrc_value=${nvmrc_value%$'\r'}
 		if [[ -n $nvmrc_value ]]; then
+			current_node_version="$(command node -v 2>/dev/null || true)"
+			if [[ $nvmrc_value == "$current_node_version" || v$nvmrc_value == "$current_node_version" ]]; then
+				__bashrc_nvm_auto_active=1
+				return 0
+			fi
+
 			load_nvm
 			nvmrc_node_version="$(nvm version "$nvmrc_value")"
 			current_node_version="$(nvm version)"
@@ -350,7 +357,13 @@ fi
 
 # Zoxide Configuration
 
-command -v zoxide &>/dev/null && eval "$(zoxide init bash)"
+if command -v zoxide &>/dev/null; then
+	eval "$(zoxide init bash)"
+	__zoxide_cd() {
+		builtin cd -- "$@" || return
+		__bashrc_auto_nvmrc
+	}
+fi
 
 #Configuration for thefuck
 #eval $(thefuck --alias)
@@ -421,6 +434,13 @@ if [ -d "/mnt/d/Android/Sdk" ]; then
 fi
 
 # CODEX bash completion
-command -v codex &>/dev/null && eval "$(codex completion bash)"
+__bashrc_codex_bin=${CODEX_CLI_PATH:-}
+if [[ ! -x $__bashrc_codex_bin ]]; then
+	__bashrc_codex_bin=$(command -v codex 2>/dev/null || true)
+fi
+if [[ -n $__bashrc_codex_bin && $__bashrc_codex_bin != /mnt/c/* ]]; then
+	__bashrc_codex_completion="$("$__bashrc_codex_bin" completion bash 2>/dev/null)" && eval "$__bashrc_codex_completion"
+fi
+unset __bashrc_codex_bin __bashrc_codex_completion
 
 source /home/eiat/.config/broot/launcher/bash/br
