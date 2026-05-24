@@ -136,3 +136,5 @@ case $- in
 esac
 
 export PATH
+
+source /home/eiat/.config/broot/launcher/bash/br

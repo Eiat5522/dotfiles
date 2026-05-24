@@ -421,3 +421,5 @@ fi
 
 # CODEX bash completion
 command -v codex &>/dev/null && eval "$(codex completion bash)"
+
+source /home/eiat/.config/broot/launcher/bash/br
