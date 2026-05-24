@@ -88,69 +88,8 @@ xterm* | rxvt*)
 *) ;;
 esac
 
-# enable color support of ls and also add handy aliases
-if [ -x /usr/bin/dircolors ]; then
-	if test -r ~/.dircolors; then
-		eval "$(dircolors -b ~/.dircolors)"
-	else
-		eval "$(dircolors -b)"
-	fi
-	alias ls='ls --color=auto'
-	#alias dir='dir --color=auto'
-	#alias vdir='vdir --color=auto'
-
-	alias grep='grep --color=auto'
-	alias fgrep='fgrep --color=auto'
-	alias egrep='egrep --color=auto'
-fi
-
-# colored GCC warnings and errors
-#export GCC_COLORS='error=01;31:warning=01;35:note=01;36:caret=01;32:locus=01:quote=01'
-
-# aliases for cd
-alias cd..='cd ..'
-alias cd...='cd ../..'
-alias cd....='cd ../../..'
-alias fd='fdfind'
-
-# aliases for LazyGit
-alias lgit='lazygit'
-alias gits='git status'
-alias gita='git add .'
-alias gitc='git commit -m' # follow by "<commit message>"
-alias gitpsh='git push'
-alias gitpll='git pull'
-alias gitpupu='git pull && git push && git status'
-
-alias apt='sudo apt'
-alias aptud='sudo apt update'
-alias aptug='sudo apt upgrade'
-alias aptudug='sudo apt update && apt upgrade'
-
-# Next level of an ls
-# options :  --no-filesize --no-time --no-permissions
-alias ls="eza --no-filesize --long --color=always --icons=always --no-user -H"
-
-# some more ls aliases
-alias ll='ls -alF'
-alias la='ls -A'
-alias l='ls -CF'
-
-# tree
-alias tree="tree -L 3 -a -I '.git' --gitignore --charset X "
-alias dtree="tree -L 3 -a -d -I '.git' --gitignore --charset X "
-
-# lstr
-alias lstr="lstr --icons"
-
-# Add an "alert" alias for long running commands.  Use like so:
-#   sleep 10; alert
-alias alert='notify-send --urgency=low -i "$([ $? = 0 ] && echo terminal || echo error)" "$(history|tail -n1|sed -e '\''s/^\s*[0-9]\+\s*//;s/[;&|]\s*alert$//'\'')"'
-
 # Alias definitions.
-# You may want to put all your additions into a separate file like
-# ~/.bash_aliases, instead of adding them here directly.
-# See /usr/share/doc/bash-doc/examples in the bash-doc package.
+# maintain all aliases in the ~/.bash_aliases file, instead of adding them here directly.
 
 if [ -f "$HOME/.bash_aliases" ]; then
 	. "$HOME/.bash_aliases"
@@ -179,10 +118,22 @@ load_nvm() {
 	__bashrc_nvm_loaded=1
 }
 
-nvm() { load_nvm; nvm "$@"; }
-node() { load_nvm; node "$@"; }
-npm() { load_nvm; npm "$@"; }
-npx() { load_nvm; npx "$@"; }
+nvm() {
+	load_nvm
+	nvm "$@"
+}
+node() {
+	load_nvm
+	node "$@"
+}
+npm() {
+	load_nvm
+	npm "$@"
+}
+npx() {
+	load_nvm
+	npx "$@"
+}
 
 __bashrc_find_nvmrc() {
 	local dir=$PWD
