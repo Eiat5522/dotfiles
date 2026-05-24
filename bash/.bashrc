@@ -15,7 +15,8 @@ if [[ -d "$HOME/.config/.fzf/bin" && ":$PATH:" != *":$HOME/.config/.fzf/bin:"* ]
 fi
 
 # Load ble.sh early and attach late, per upstream startup guidance.
-if [[ -f "$HOME/.local/share/blesh/ble.sh" ]]; then
+# Set BASHRC_DISABLE_BLESH=1 for one-off startup timing/debug sessions.
+if [[ ${BASHRC_DISABLE_BLESH:-0} != 1 && -f "$HOME/.local/share/blesh/ble.sh" ]]; then
 	__bashrc_blesh_configured=1
 	# shellcheck source=/dev/null
 	source -- "$HOME/.local/share/blesh/ble.sh" --attach=none --rcfile "$HOME/.dotfiles/bash/.blerc"
@@ -402,7 +403,7 @@ command -v atuin &>/dev/null && eval "$(atuin init bash)"
 
 __bashrc_nvm_auto_pwd=$PWD
 
-if declare -F ble-attach >/dev/null; then
+if [[ ${BASHRC_DISABLE_BLESH:-0} != 1 ]] && declare -F ble-attach >/dev/null; then
 	ble-attach
 fi
 unset __bashrc_blesh_configured __bashrc_blesh_loaded
