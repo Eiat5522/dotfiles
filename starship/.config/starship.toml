@@ -19,6 +19,7 @@ command_timeout = 500
 
 format = """
 $username\
+$hostname\
 $sudo\
 $os\
 $directory\
@@ -116,16 +117,19 @@ $time"""
 
 ## Customization for individual Starship's module below:
 
-[character] 
+[character]
 success_symbol = '[➜](bold green)'
-error_symbol = '[✗](bold red)' 
+error_symbol = '[✗](bold red)'
 
 [sudo]
 format = '\[[$symbol]as root($style)\]'
 symbol = ""
 
 [hostname]
-disabled = true
+ssh_only = true
+ssh_symbol = "🌐 "
+format = '[$ssh_symbol$hostname]($style) in '
+disabled = false
 
 [username]
 format = '\[[$user]($style)\]'
@@ -144,7 +148,7 @@ fish_style_pwd_dir_length = 3
 "Documents" = " 󰧮 "
 "Music" = "  "
 "Movies" = " 󰿏 "
-"Pictures" =  " "
+"Pictures" = " "
 "Sources" = "  "
 "Downloads" = "  "
 "~" = " "
@@ -156,7 +160,7 @@ style = "bg:mauve fg:#b6b7bb"
 
 [os.symbols]
 Windows = ""
-Ubuntu = "  " #  
+Ubuntu = "  "        #  
 SUSE = ""
 Raspbian = "󰐿"
 Mint = "󰣭"
@@ -233,7 +237,7 @@ am_or_rebase = "am/rebase"
 
 [git_status]
 disabled = false
-style= "fg:#5F8575"
+style = "fg:#5F8575"
 stashed = " ${count} "
 ahead = "󰞙 ${count} "
 behind = "󰞒 ${count} "
@@ -303,7 +307,7 @@ style = 'bold black'
 disabled = false
 
 [line_break]
-disabled = false   
+disabled = false
 
 [battery]
 full_symbol = "🔋"
@@ -330,7 +334,7 @@ style = "bright-white"
 disabled = false
 
 [memory_usage]
-format = '\[[$symbol[${ram}](|${swap})]($style)\]' 
+format = '\[[$symbol[${ram}](|${swap})]($style)\]'
 disabled = false
 threshold = 51
 symbol = "󰍛 "
