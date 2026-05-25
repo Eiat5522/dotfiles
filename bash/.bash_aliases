@@ -54,3 +54,29 @@ alias lstr="lstr --icons"
 # Add an "alert" alias for long running commands.  Use like so:
 #   sleep 10; alert
 alias alert='notify-send --urgency=low -i "$([ $? = 0 ] && echo terminal || echo error)" "$(history|tail -n1|sed -e '\''s/^\s*[0-9]\+\s*//;s/[;&|]\s*alert$//'\'')"'
+
+# Task Master aliases
+alias tm='task-master'
+alias taskmaster='task-master'
+
+# alias batcat and cat to bat
+alias bat="batcat"
+#alias cat="batcat"
+
+# fzf
+# called from ~/scripts/
+alias nlof='$HOME/scripts/fzf_listoldfiles.sh'
+# opens documentation through fzf (eg: git,zsh etc.)
+alias fman="compgen -c | fzf | xargs man"
+
+# zoxide (called from ~/scripts/)
+alias nzo='$HOME/scripts/zoxide_openfiles_nvim.sh'
+
+# alias for fzf-nova
+alias fzf-nova="$HOME/.local/share/fzf-nova/fzf-nova"
+
+# WSL: use SDK stored on Windows D: drive
+if [ -d "/mnt/d/Android/Sdk" ]; then
+	# Alias to run Android emulator with Windows paths (required for WSL)
+	alias android-emulator='cd /mnt/d && ANDROID_SDK_ROOT="D:\Android\Sdk" ANDROID_HOME="D:\Android\Sdk" /mnt/d/Android/Sdk/emulator/emulator.exe'
+fi
