@@ -163,13 +163,16 @@ __bashrc_auto_nvmrc() {
 		IFS= read -r nvmrc_value <"$nvmrc_path" || nvmrc_value=
 		nvmrc_value=${nvmrc_value%$'\r'}
 		if [[ -n $nvmrc_value ]]; then
+			load_nvm
+			if [[ -z ${__bashrc_nvm_auto_active-} ]]; then
+				__bashrc_nvm_auto_previous_version="$(nvm version)"
+			fi
 			current_node_version="$(command node -v 2>/dev/null || true)"
 			if [[ $nvmrc_value == "$current_node_version" || v$nvmrc_value == "$current_node_version" ]]; then
 				__bashrc_nvm_auto_active=1
 				return 0
 			fi
 
-			load_nvm
 			nvmrc_node_version="$(nvm version "$nvmrc_value")"
 			current_node_version="$(nvm version)"
 
@@ -181,7 +184,17 @@ __bashrc_auto_nvmrc() {
 			__bashrc_nvm_auto_active=1
 		fi
 	elif [[ -n ${__bashrc_nvm_auto_active-} ]]; then
+		load_nvm
+		case "${__bashrc_nvm_auto_previous_version-}" in
+		"" | N/A | system)
+			nvm deactivate >/dev/null
+			;;
+		*)
+			nvm use --silent "$__bashrc_nvm_auto_previous_version" >/dev/null
+			;;
+		esac
 		unset __bashrc_nvm_auto_active
+		unset __bashrc_nvm_auto_previous_version
 	fi
 }
 
@@ -320,9 +333,6 @@ fi
 #eval $(thefuck --alias)
 #You can use whatever you want as an alias, like for Mondays:
 #eval $(thefuck --alias FUCK)
-
-# Export GitHub environment variable
-# export GH_TOKEN='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'
 
 # Task Master aliases
 alias tm='task-master'
