@@ -432,3 +432,5 @@ unset __bashrc_codex_bin
 # Broot shell integration (conditional)
 # shellcheck source=/dev/null
 [[ -f "$HOME/.config/broot/launcher/bash/br" ]] && source "$HOME/.config/broot/launcher/bash/br"
+
+eval "$(/bin/brew shellenv)"
