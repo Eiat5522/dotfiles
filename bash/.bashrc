@@ -271,15 +271,6 @@ bind '"\C-a": "nvims\C-j"'
 # shellcheck source=/dev/null
 [ -f "$HOME/scripts/fzf-git.sh" ] && source "$HOME/scripts/fzf-git.sh"
 
-# fzf
-# called from ~/scripts/
-alias nlof='$HOME/scripts/fzf_listoldfiles.sh'
-# opens documentation through fzf (eg: git,zsh etc.)
-alias fman="compgen -c | fzf | xargs man"
-
-# zoxide (called from ~/scripts/)
-alias nzo='$HOME/scripts/zoxide_openfiles_nvim.sh'
-
 # Existing Configuration for Starship
 #STARSHIP_CONFIG='~/.config/starship.toml'
 #
@@ -334,14 +325,6 @@ fi
 #You can use whatever you want as an alias, like for Mondays:
 #eval $(thefuck --alias FUCK)
 
-# Task Master aliases
-alias tm='task-master'
-alias taskmaster='task-master'
-
-# alias batcat and cat to bat
-alias bat="batcat"
-#alias cat="batcat"
-
 # Enable bash completion, fzf, and ble.sh
 # shellcheck source=/dev/null
 if [[ -z ${BASH_COMPLETION_VERSINFO-} && -f /etc/bash_completion ]]; then
@@ -384,15 +367,6 @@ unset __bashrc_blesh_configured __bashrc_blesh_loaded
 
 # add default keybinding for fzf-nova
 bind -x '"\em": fzf-nova'
-
-# alias for fzf-nova
-alias fzf-nova='/home/eiat/.local/share/fzf-nova/fzf-nova'
-
-# WSL: use SDK stored on Windows D: drive
-if [ -d "/mnt/d/Android/Sdk" ]; then
-	# Alias to run Android emulator with Windows paths (required for WSL)
-	alias android-emulator='cd /mnt/d && ANDROID_SDK_ROOT="D:\Android\Sdk" ANDROID_HOME="D:\Android\Sdk" /mnt/d/Android/Sdk/emulator/emulator.exe'
-fi
 
 # CODEX bash completion
 __bashrc_codex_bin=${CODEX_CLI_PATH:-}
