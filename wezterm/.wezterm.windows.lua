@@ -1,1 +1,1 @@
-/home/eiat/.wezterm.lua
+/mnt/c/Users/Dev/.wezterm.lua

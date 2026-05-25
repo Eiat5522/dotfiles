@@ -1,84 +1,18 @@
 local wezterm = require("wezterm")
-local launch_menu = {}
 local act = wezterm.action
 local config = wezterm.config_builder()
 -- ----------------------- My Configuration Starts Here  ---------------------------- --
 config.default_domain = "Ubuntu-24.04"
 -- -------------------------------------------------------------------------------- --
 config.default_prog = { "wsl.exe", "~", "-d", "Ubuntu-24.04", "--exec", "bash", "-l" }
--- ---------------------------- Launcher Menu Domain Selector ------------------------- --
-config.launch_menu = {
-	{
-		label = "Pwsh",
-		args = { "pwsh.exe", "-NoLogo" },
-		cwd = "C:\\Users\\Dev\\",
-	},
-	{
-		label = "Powershell",
-		args = { "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe", "-NoLogo" },
-		cwd = "C:\\Users\\Dev\\",
-	},
-	{
-		label = "Command Prompt",
-		args = { "cmd.exe", "/s", "/k", "c:/clink/clink_x64.exe", "inject", "-q" },
-		cwd = "C:\\Users\\Dev\\",
-		set_environment_variables = {
-			prompt = "$E]7;file://localhost/$P$E\\$E[32m$T$E[0m $E[35m$P$E[36m$_$G$E[0m ",
-			DIRCMD = "/d",
-		},
-	},
-	{
-		label = "WSL: Ubuntu-24.04",
-		args = { "wsl.exe", "-d", "Ubuntu-24.04", "--exec", "bash", "-l" },
-		set_environment_variables = {
-			prompt = "$E]7;file://localhost/$P$E\\$E[32m$T$E[0m $E[35m$P$E[36m$_$G$E[0m ",
-		},
-		--args = { "bash", "-l" },
-		--domain = 'DefaultDomain',
-	},
-}
--- ---------------------------------------------------------------------------------- --
 -- -------------------- ---- MULTIPLEXER SERVER DOMAINS  ---------------------------- --
 -- ------------------------- SSH Domains Configuration  ----------------------------- --
 config.ssh_domains = {
 	{
 		-- This name identifies the domain
 		name = "my.server",
-		remote_address = "192.168.1.1",
+		remote_address = "localhost:22",
 		username = "eiat",
-	},
-}
--- -------------------------- Unix Domain Configuration  ---------------------------- --
-config.unix_domains = {
-	{
-		name = "unix",
-		skip_permissions_check = true,
-		socket_path = "C:\\Users\\Dev\\.local\\share\\wezterm\\unix-mux.sock",
-		local_echo_threshold_ms = 10,
-		-- If true, do not attempt to start this server if we try and fail to connect to it.
-		no_serve_automatically = false,
-	},
-}
--- This causes `wezterm` to act as though it was started as `wezterm connect unix`
--- by default, connecting to the unix domain on `wezterm` startup.
-config.default_gui_startup_args = { "connect", "unix" }
--- ----------------------------------------------------------------------------------- --
--- Informing `wezterm` that all hosts are unix machines, so spawning a tab in the same directory
--- as an existing tab work even for a plain SSH session:
--- config.ssh_domains = wezterm.default_ssh_domains()
--- for _, dom in ipairs(config.ssh_domains) do
---	dom.assume_shell = "Posix"
--- end
--- -------------------  Set Default_Multiplexer_Server_Domain  ----------------------- --
-config.default_mux_server_domain = "local"
--- --------------------------- WSL Domains Configuration  ---------------------------- --
-config.wsl_domains = {
-	{
-		name = "Ubuntu-24.04",
-		distribution = "Ubuntu-24.04",
-		username = "eiat",
-		default_cwd = "/home/eiat/",
-		default_prog = { "bash", "-l" },
 	},
 }
 -- -------------------  Set Default WSL Domain  ----------------------- --
@@ -194,7 +128,6 @@ local keys = {
 	},
 }
 
-launch_menu = launch_menu
 config.mouse_bindings = mouse_bindings
 config.keys = keys
 
