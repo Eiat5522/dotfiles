@@ -82,7 +82,6 @@ path_append "$HOME/.nvm/versions/node/v22.21.0/bin/copilot"
 path_append "$HOME/.nvm/versions/node/v22.22.2/bin/copilot"
 path_append "$HOME/.local/bin/hermes"
 path_append "$HOME/.opencode/bin/opencode"
-path_prepend "/home/testuser/bin"
 
 export DOCKER_HOST="unix:///run/user/1000/docker.sock"
 
@@ -137,4 +136,6 @@ esac
 
 export PATH
 
-source /home/eiat/.config/broot/launcher/bash/br
+# Broot shell integration (conditional)
+# shellcheck source=/dev/null
+[[ -f "$HOME/.config/broot/launcher/bash/br" ]] && source "$HOME/.config/broot/launcher/bash/br"
