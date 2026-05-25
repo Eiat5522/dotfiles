@@ -45,7 +45,26 @@ shopt -s checkwinsize
 #shopt -s globstar
 
 # make less more friendly for non-text input files, see lesspipe(1)
-[ -x /usr/bin/lesspipe ] && eval "$(SHELL=/bin/sh lesspipe)"
+# Cache lesspipe output to avoid subshell on every startup.
+__bashrc_lesspipe_cache="${XDG_CACHE_HOME:-$HOME/.cache}/lesspipe.cache"
+if [[ -x /usr/bin/lesspipe ]]; then
+	if [[ ! -f "$__bashrc_lesspipe_cache" || /usr/bin/lesspipe -nt "$__bashrc_lesspipe_cache" ]]; then
+		__bashrc_lesspipe_cachedir="${__bashrc_lesspipe_cache%/*}"
+		mkdir -p "$__bashrc_lesspipe_cachedir"
+		if __bashrc_lesspipe_tmp="$(mktemp -p "$__bashrc_lesspipe_cachedir" lesspipe.cache.tmp.XXXXXX 2>/dev/null)"; then
+			if SHELL=/bin/sh lesspipe >"$__bashrc_lesspipe_tmp" 2>/dev/null && [[ -s "$__bashrc_lesspipe_tmp" ]]; then
+				mv "$__bashrc_lesspipe_tmp" "$__bashrc_lesspipe_cache"
+			else
+				rm -f -- "$__bashrc_lesspipe_tmp"
+			fi
+		fi
+	fi
+	if [[ -s "$__bashrc_lesspipe_cache" ]]; then
+		# shellcheck source=/dev/null
+		source "$__bashrc_lesspipe_cache"
+	fi
+fi
+unset __bashrc_lesspipe_cache __bashrc_lesspipe_cachedir __bashrc_lesspipe_tmp
 
 # set variable identifying the chroot you work in (used in the prompt below)
 if [ -z "${debian_chroot:-}" ] && [ -r /etc/debian_chroot ]; then
@@ -94,17 +113,6 @@ esac
 if [ -f "$HOME/.bash_aliases" ]; then
 	. "$HOME/.bash_aliases"
 fi
-
-# enable programmable completion features (you don't need to enable
-# this, if it's already enabled in /etc/bash.bashrc and /etc/profile
-# sources /etc/bash.bashrc).
-#if ! shopt -oq posix; then
-#  if [ -f /usr/share/bash-completion/bash_completion ]; then
-#    . /usr/share/bash-completion/bash_completion
-#  elif [ -f /etc/bash_completion ]; then
-#    . /etc/bash_completion
-#  fi
-#fi
 
 # Lazy-load NVM only on first use to keep interactive startup fast.
 load_nvm() {
@@ -277,6 +285,20 @@ bind '"\C-a": "nvims\C-j"'
 #eval "$(starship init bash)"
 
 # --- Prompt setup: VS Code integrated terminal vs everything else ---
+# Helper: source a cached init script, regenerating if the binary is newer.
+__bashrc_cached_init() {
+	local cmd="$1" args="$2" cache
+	cache="${XDG_CACHE_HOME:-$HOME/.cache}/shell-init/${cmd}.bash"
+	local bin
+	bin="$(command -v "$cmd" 2>/dev/null)" || return 1
+	if [[ ! -f "$cache" || "$bin" -nt "$cache" ]]; then
+		mkdir -p "${cache%/*}"
+		# shellcheck disable=SC2086
+		"$bin" $args >"$cache" 2>/dev/null || return 1
+	fi
+	# shellcheck source=/dev/null
+	source "$cache"
+}
 
 if [[ "$TERM_PROGRAM" == "vscode" ]]; then
 	# Don't run Starship in VS Code integrated terminal.
@@ -299,9 +321,11 @@ if [[ "$TERM_PROGRAM" == "vscode" ]]; then
 	PS1='\[\e[32m\]\t\[\e[0m\] \[\e[35m\]\w\[\e[0m\]\n\[\e[36m\]>\[\e[0m\] '
 
 else
-	# Normal terminals: use Starship
+	# Normal terminals: use Starship (cached init for fast startup)
 	export STARSHIP_CONFIG="$HOME/.config/starship.toml"
-	command -v starship &>/dev/null && eval "$(starship init bash)"
+	if command -v starship >/dev/null 2>&1; then
+		__bashrc_cached_init starship "init bash"
+	fi
 fi
 
 ######################  Starship Presents  #########################
@@ -310,10 +334,8 @@ fi
 #starship preset catppuccin-powerline -o ~/.config/starship.toml
 #starship preset bracketed-segments -o ~/.config/starship.toml
 
-# Zoxide Configuration
-
-if command -v zoxide &>/dev/null; then
-	eval "$(zoxide init bash)"
+# Zoxide Configuration (cached init for fast startup)
+if __bashrc_cached_init zoxide "init bash"; then
 	__zoxide_cd() {
 		builtin cd -- "$@" || return
 		__bashrc_auto_nvmrc
@@ -325,13 +347,22 @@ fi
 #You can use whatever you want as an alias, like for Mondays:
 #eval $(thefuck --alias FUCK)
 
-# Enable bash completion, fzf, and ble.sh
-# shellcheck source=/dev/null
-if [[ -z ${BASH_COMPLETION_VERSINFO-} && -f /etc/bash_completion ]]; then
-	source /etc/bash_completion
-elif [[ -z ${BASH_COMPLETION_VERSINFO-} && -f /usr/local/etc/bash_completion ]]; then
-	# shellcheck source=/dev/null
-	source /usr/local/etc/bash_completion
+# Enable bash completion. When ble.sh is active, defer loading to reduce
+# prompt-critical startup time; ble.sh will lazy-load completions on demand.
+__bashrc_load_completions() {
+	if [[ -z ${BASH_COMPLETION_VERSINFO-} && -f /etc/bash_completion ]]; then
+		# shellcheck source=/dev/null
+		source /etc/bash_completion
+	elif [[ -z ${BASH_COMPLETION_VERSINFO-} && -f /usr/local/etc/bash_completion ]]; then
+		# shellcheck source=/dev/null
+		source /usr/local/etc/bash_completion
+	fi
+}
+
+if [[ -n ${__bashrc_blesh_loaded-} ]]; then
+	ble/util/idle.push '__bashrc_load_completions'
+else
+	__bashrc_load_completions
 fi
 
 # ble.sh handles fzf integration from ~/.dotfiles/bash/.blerc. Fall back to
@@ -341,10 +372,16 @@ if [[ -z ${__bashrc_blesh_loaded-} && -t 0 && -t 1 && -f ~/.fzf.bash ]]; then
 	source ~/.fzf.bash
 fi
 
-# Enable wezterm CLI completion
+# Lazy-load wezterm CLI completion on first <Tab> for wezterm commands.
 if command -v wezterm &>/dev/null; then
-	# shellcheck source=/dev/null
-	source <(wezterm shell-completion --shell bash)
+	_wezterm_lazy_completion() {
+		unset -f _wezterm_lazy_completion
+		complete -r wezterm 2>/dev/null
+		# shellcheck source=/dev/null
+		source <(wezterm shell-completion --shell bash)
+		return 124 # retry completion
+	}
+	complete -F _wezterm_lazy_completion wezterm
 fi
 
 # Enable wezterm shell integration
@@ -353,10 +390,17 @@ if [ -f ~/.local/share/wezterm/wezterm.sh ]; then
 	. ~/.local/share/wezterm/wezterm.sh
 fi
 
-# shellcheck source=/dev/null
-[[ -f ~/.bash-preexec.sh ]] && source ~/.bash-preexec.sh
+# bash-preexec: skip when ble.sh is active since ble.sh provides its own
+# preexec/precmd hooks natively—loading both wastes time and can conflict.
+if [[ -z ${__bashrc_blesh_loaded-} ]]; then
+	# shellcheck source=/dev/null
+	[[ -f ~/.bash-preexec.sh ]] && source ~/.bash-preexec.sh
+fi
 
-command -v atuin &>/dev/null && eval "$(atuin init bash)"
+# Atuin shell history (cached init for fast startup)
+if command -v atuin >/dev/null 2>&1; then
+	__bashrc_cached_init atuin "init bash"
+fi
 
 __bashrc_nvm_auto_pwd=$PWD
 
@@ -368,14 +412,23 @@ unset __bashrc_blesh_configured __bashrc_blesh_loaded
 # add default keybinding for fzf-nova
 bind -x '"\em": fzf-nova'
 
-# CODEX bash completion
+# CODEX bash completion — lazy-loaded on first <Tab> to avoid subprocess at startup.
 __bashrc_codex_bin=${CODEX_CLI_PATH:-}
 if [[ ! -x $__bashrc_codex_bin ]]; then
 	__bashrc_codex_bin=$(command -v codex 2>/dev/null || true)
 fi
 if [[ -n $__bashrc_codex_bin && $__bashrc_codex_bin != /mnt/c/* ]]; then
-	__bashrc_codex_completion="$("$__bashrc_codex_bin" completion bash 2>/dev/null)" && eval "$__bashrc_codex_completion"
+	_codex_lazy_completion() {
+		unset -f _codex_lazy_completion
+		complete -r codex 2>/dev/null
+		local comp
+		comp="$("${CODEX_CLI_PATH:-$(command -v codex)}" completion bash 2>/dev/null)" && eval "$comp"
+		return 124 # retry completion
+	}
+	complete -F _codex_lazy_completion codex
 fi
-unset __bashrc_codex_bin __bashrc_codex_completion
+unset __bashrc_codex_bin
 
-source /home/eiat/.config/broot/launcher/bash/br
+# Broot shell integration (conditional)
+# shellcheck source=/dev/null
+[[ -f "$HOME/.config/broot/launcher/bash/br" ]] && source "$HOME/.config/broot/launcher/bash/br"

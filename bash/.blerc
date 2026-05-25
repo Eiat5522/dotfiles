@@ -1,6 +1,7 @@
 # shellcheck shell=bash
 # ble.sh runtime tuning and deferred integrations.
 
+# --- Performance tuning ---
 bleopt history_lazyload=1
 bleopt complete_auto_delay=150
 bleopt complete_timeout_auto=500
@@ -8,6 +9,17 @@ bleopt complete_timeout_compvar=100
 bleopt highlight_timeout_sync=20
 bleopt highlight_eval_word_limit=20
 
+# Reduce syntax highlighting overhead for long lines.
+bleopt syntax_eval_polling_interval=50
+bleopt highlight_timeout_async=5000
+
+# Limit the number of menu items shown to avoid rendering lag.
+bleopt complete_menu_maxlines=20
+
+# Disable elapsed-time display (avoids a fork for date on every prompt).
+bleopt exec_elapsed_enabled=
+
+# --- Deferred integrations ---
 # fzf completion must be layered after bash-completion; -d moves the work off
 # the prompt-critical startup path.
 ble-import -d integration/fzf-completion
