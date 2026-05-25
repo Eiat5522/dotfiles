@@ -49,13 +49,14 @@ shopt -s checkwinsize
 __bashrc_lesspipe_cache="${XDG_CACHE_HOME:-$HOME/.cache}/lesspipe.cache"
 if [[ -x /usr/bin/lesspipe ]]; then
 	if [[ ! -f "$__bashrc_lesspipe_cache" || /usr/bin/lesspipe -nt "$__bashrc_lesspipe_cache" ]]; then
-		mkdir -p "${__bashrc_lesspipe_cache%/*}"
-		__bashrc_lesspipe_tmp="$(mktemp "${__bashrc_lesspipe_cache}.tmp.XXXXXX" 2>/dev/null || true)"
+		__bashrc_lesspipe_cachedir="${__bashrc_lesspipe_cache%/*}"
+		mkdir -p "$__bashrc_lesspipe_cachedir"
+		__bashrc_lesspipe_tmp="$(mktemp -p "$__bashrc_lesspipe_cachedir" lesspipe.cache.tmp.XXXXXX 2>/dev/null || true)"
 		if [[ -n "$__bashrc_lesspipe_tmp" ]]; then
 			if SHELL=/bin/sh lesspipe >"$__bashrc_lesspipe_tmp" 2>/dev/null && [[ -s "$__bashrc_lesspipe_tmp" ]]; then
 				mv "$__bashrc_lesspipe_tmp" "$__bashrc_lesspipe_cache"
 			else
-				rm -f -- "$__bashrc_lesspipe_tmp" "$__bashrc_lesspipe_cache"
+				rm -f -- "$__bashrc_lesspipe_tmp"
 			fi
 		fi
 	fi
@@ -64,7 +65,7 @@ if [[ -x /usr/bin/lesspipe ]]; then
 		source "$__bashrc_lesspipe_cache"
 	fi
 fi
-unset __bashrc_lesspipe_cache __bashrc_lesspipe_tmp
+unset __bashrc_lesspipe_cache __bashrc_lesspipe_cachedir __bashrc_lesspipe_tmp
 
 # set variable identifying the chroot you work in (used in the prompt below)
 if [ -z "${debian_chroot:-}" ] && [ -r /etc/debian_chroot ]; then
@@ -290,8 +291,7 @@ __bashrc_cached_init() {
 	local cmd="$1" args="$2" cache
 	cache="${XDG_CACHE_HOME:-$HOME/.cache}/shell-init/${cmd}.bash"
 	local bin
-	# Optional tools (e.g. starship/atuin) should not abort .bashrc under errexit.
-	bin="$(command -v "$cmd" 2>/dev/null)" || return 0
+	bin="$(command -v "$cmd" 2>/dev/null)" || return 1
 	if [[ ! -f "$cache" || "$bin" -nt "$cache" ]]; then
 		mkdir -p "${cache%/*}"
 		# shellcheck disable=SC2086
@@ -324,7 +324,9 @@ if [[ "$TERM_PROGRAM" == "vscode" ]]; then
 else
 	# Normal terminals: use Starship (cached init for fast startup)
 	export STARSHIP_CONFIG="$HOME/.config/starship.toml"
-	__bashrc_cached_init starship "init bash"
+	if command -v starship >/dev/null 2>&1; then
+		__bashrc_cached_init starship "init bash"
+	fi
 fi
 
 ######################  Starship Presents  #########################
@@ -397,7 +399,9 @@ if [[ -z ${__bashrc_blesh_loaded-} ]]; then
 fi
 
 # Atuin shell history (cached init for fast startup)
-__bashrc_cached_init atuin "init bash"
+if command -v atuin >/dev/null 2>&1; then
+	__bashrc_cached_init atuin "init bash"
+fi
 
 __bashrc_nvm_auto_pwd=$PWD
 
