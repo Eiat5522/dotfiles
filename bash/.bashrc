@@ -49,11 +49,21 @@ shopt -s checkwinsize
 __bashrc_lesspipe_cache="${XDG_CACHE_HOME:-$HOME/.cache}/lesspipe.cache"
 if [[ -x /usr/bin/lesspipe ]]; then
 	if [[ ! -f "$__bashrc_lesspipe_cache" || /usr/bin/lesspipe -nt "$__bashrc_lesspipe_cache" ]]; then
+		local_lesspipe_tmp=
 		mkdir -p "${__bashrc_lesspipe_cache%/*}"
-		SHELL=/bin/sh lesspipe >"$__bashrc_lesspipe_cache" 2>/dev/null
+		local_lesspipe_tmp="$(mktemp "${__bashrc_lesspipe_cache}.tmp.XXXXXX" 2>/dev/null || true)"
+		if [[ -n "$local_lesspipe_tmp" ]]; then
+			if SHELL=/bin/sh lesspipe >"$local_lesspipe_tmp" 2>/dev/null && [[ -s "$local_lesspipe_tmp" ]]; then
+				mv "$local_lesspipe_tmp" "$__bashrc_lesspipe_cache"
+			else
+				rm -f -- "$local_lesspipe_tmp" "$__bashrc_lesspipe_cache"
+			fi
+		fi
 	fi
-	# shellcheck source=/dev/null
-	source "$__bashrc_lesspipe_cache"
+	if [[ -s "$__bashrc_lesspipe_cache" ]]; then
+		# shellcheck source=/dev/null
+		source "$__bashrc_lesspipe_cache"
+	fi
 fi
 unset __bashrc_lesspipe_cache
 
@@ -281,7 +291,7 @@ __bashrc_cached_init() {
 	local cmd="$1" args="$2" cache
 	cache="${XDG_CACHE_HOME:-$HOME/.cache}/shell-init/${cmd}.bash"
 	local bin
-	bin="$(command -v "$cmd" 2>/dev/null)" || return 1
+	bin="$(command -v "$cmd" 2>/dev/null)" || return 0
 	if [[ ! -f "$cache" || "$bin" -nt "$cache" ]]; then
 		mkdir -p "${cache%/*}"
 		# shellcheck disable=SC2086
@@ -338,23 +348,20 @@ fi
 
 # Enable bash completion. When ble.sh is active, defer loading to reduce
 # prompt-critical startup time; ble.sh will lazy-load completions on demand.
-if [[ -n ${__bashrc_blesh_loaded-} ]]; then
-	ble/util/idle.push '__bashrc_load_completions'
-	__bashrc_load_completions() {
-		if [[ -z ${BASH_COMPLETION_VERSINFO-} && -f /etc/bash_completion ]]; then
-			source /etc/bash_completion
-		elif [[ -z ${BASH_COMPLETION_VERSINFO-} && -f /usr/local/etc/bash_completion ]]; then
-			source /usr/local/etc/bash_completion
-		fi
-	}
-else
-	# shellcheck source=/dev/null
+__bashrc_load_completions() {
 	if [[ -z ${BASH_COMPLETION_VERSINFO-} && -f /etc/bash_completion ]]; then
+		# shellcheck source=/dev/null
 		source /etc/bash_completion
 	elif [[ -z ${BASH_COMPLETION_VERSINFO-} && -f /usr/local/etc/bash_completion ]]; then
 		# shellcheck source=/dev/null
 		source /usr/local/etc/bash_completion
 	fi
+}
+
+if [[ -n ${__bashrc_blesh_loaded-} ]]; then
+	ble/util/idle.push '__bashrc_load_completions'
+else
+	__bashrc_load_completions
 fi
 
 # ble.sh handles fzf integration from ~/.dotfiles/bash/.blerc. Fall back to

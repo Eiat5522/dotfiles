@@ -135,7 +135,3 @@ case $- in
 esac
 
 export PATH
-
-# Broot shell integration (conditional)
-# shellcheck source=/dev/null
-[[ -f "$HOME/.config/broot/launcher/bash/br" ]] && source "$HOME/.config/broot/launcher/bash/br"
