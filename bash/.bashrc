@@ -49,7 +49,6 @@ shopt -s checkwinsize
 __bashrc_lesspipe_cache="${XDG_CACHE_HOME:-$HOME/.cache}/lesspipe.cache"
 if [[ -x /usr/bin/lesspipe ]]; then
 	if [[ ! -f "$__bashrc_lesspipe_cache" || /usr/bin/lesspipe -nt "$__bashrc_lesspipe_cache" ]]; then
-		__bashrc_lesspipe_tmp=
 		mkdir -p "${__bashrc_lesspipe_cache%/*}"
 		__bashrc_lesspipe_tmp="$(mktemp "${__bashrc_lesspipe_cache}.tmp.XXXXXX" 2>/dev/null || true)"
 		if [[ -n "$__bashrc_lesspipe_tmp" ]]; then
@@ -65,7 +64,7 @@ if [[ -x /usr/bin/lesspipe ]]; then
 		source "$__bashrc_lesspipe_cache"
 	fi
 fi
-unset __bashrc_lesspipe_cache
+unset __bashrc_lesspipe_cache __bashrc_lesspipe_tmp
 
 # set variable identifying the chroot you work in (used in the prompt below)
 if [ -z "${debian_chroot:-}" ] && [ -r /etc/debian_chroot ]; then
