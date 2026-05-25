@@ -51,8 +51,7 @@ if [[ -x /usr/bin/lesspipe ]]; then
 	if [[ ! -f "$__bashrc_lesspipe_cache" || /usr/bin/lesspipe -nt "$__bashrc_lesspipe_cache" ]]; then
 		__bashrc_lesspipe_cachedir="${__bashrc_lesspipe_cache%/*}"
 		mkdir -p "$__bashrc_lesspipe_cachedir"
-		__bashrc_lesspipe_tmp="$(mktemp -p "$__bashrc_lesspipe_cachedir" lesspipe.cache.tmp.XXXXXX 2>/dev/null || true)"
-		if [[ -n "$__bashrc_lesspipe_tmp" ]]; then
+		if __bashrc_lesspipe_tmp="$(mktemp -p "$__bashrc_lesspipe_cachedir" lesspipe.cache.tmp.XXXXXX 2>/dev/null)"; then
 			if SHELL=/bin/sh lesspipe >"$__bashrc_lesspipe_tmp" 2>/dev/null && [[ -s "$__bashrc_lesspipe_tmp" ]]; then
 				mv "$__bashrc_lesspipe_tmp" "$__bashrc_lesspipe_cache"
 			else
