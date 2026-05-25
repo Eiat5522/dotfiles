@@ -31,7 +31,7 @@ config.launch_menu = {
 		label = "WSL: Ubuntu-24.04",
 		args = { "wsl.exe", "-d", "Ubuntu-24.04", "--exec", "bash", "-l" },
 		set_environment_variables = {
-			prompt = '$E]7;file://localhost/$P$E\\$E[32m$T$E[0m $E[35m$P$E[36m$_$G$E[0m ',
+			prompt = "$E]7;file://localhost/$P$E\\$E[32m$T$E[0m $E[35m$P$E[36m$_$G$E[0m ",
 		},
 		--args = { "bash", "-l" },
 		--domain = 'DefaultDomain',
@@ -44,7 +44,7 @@ config.ssh_domains = {
 	{
 		-- This name identifies the domain
 		name = "my.server",
-		remote_address = "localhost",
+		remote_address = "192.168.1.1",
 		username = "eiat",
 	},
 }
@@ -61,7 +61,7 @@ config.unix_domains = {
 }
 -- This causes `wezterm` to act as though it was started as `wezterm connect unix`
 -- by default, connecting to the unix domain on `wezterm` startup.
- config.default_gui_startup_args = { 'connect', 'unix' }
+config.default_gui_startup_args = { "connect", "unix" }
 -- ----------------------------------------------------------------------------------- --
 -- Informing `wezterm` that all hosts are unix machines, so spawning a tab in the same directory
 -- as an existing tab work even for a plain SSH session:
@@ -70,9 +70,9 @@ config.unix_domains = {
 --	dom.assume_shell = "Posix"
 -- end
 -- -------------------  Set Default_Multiplexer_Server_Domain  ----------------------- --
- config.default_mux_server_domain = "local"
+config.default_mux_server_domain = "local"
 -- --------------------------- WSL Domains Configuration  ---------------------------- --
- config.wsl_domains = {
+config.wsl_domains = {
 	{
 		name = "Ubuntu-24.04",
 		distribution = "Ubuntu-24.04",
@@ -177,21 +177,21 @@ local keys = {
 	},
 	-- Rename Current Tab
 	{
-    key = 'E',
-    mods = 'CTRL|SHIFT',
-    action = act.PromptInputLine {
-      description = 'Enter new name for tab',
-      initial_value = 'My Tab Name',
-      action = wezterm.action_callback(function(window, pane, line)
-        -- line will be `nil` if they hit escape without entering anything
-        -- An empty string if they just hit enter
-        -- Or the actual line of text they wrote
-        if line then
-          window:active_tab():set_title(line)
-        end
-      end),
-    },
-	}
+		key = "E",
+		mods = "CTRL|SHIFT",
+		action = act.PromptInputLine({
+			description = "Enter new name for tab",
+			initial_value = "My Tab Name",
+			action = wezterm.action_callback(function(window, pane, line)
+				-- line will be `nil` if they hit escape without entering anything
+				-- An empty string if they just hit enter
+				-- Or the actual line of text they wrote
+				if line then
+					window:active_tab():set_title(line)
+				end
+			end),
+		}),
+	},
 }
 
 launch_menu = launch_menu
