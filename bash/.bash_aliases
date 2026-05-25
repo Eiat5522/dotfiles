@@ -73,7 +73,7 @@ alias fman="compgen -c | fzf | xargs man"
 alias nzo='$HOME/scripts/zoxide_openfiles_nvim.sh'
 
 # alias for fzf-nova
-alias fzf-nova='/home/eiat/.local/share/fzf-nova/fzf-nova'
+alias fzf-nova="$HOME/.local/share/fzf-nova/fzf-nova"
 
 # WSL: use SDK stored on Windows D: drive
 if [ -d "/mnt/d/Android/Sdk" ]; then
