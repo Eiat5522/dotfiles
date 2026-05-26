@@ -130,7 +130,6 @@ case $- in
 		pgrep -u "$USER" ssh-agent >/dev/null || eval "$(ssh-agent -s)" >/dev/null
 		ssh-add -l >/dev/null 2>&1 || ssh-add "$HOME/.ssh/id_ed25519" >/dev/null 2>&1
 	fi
-	[ -f "$HOME/.bashrc" ] && . "$HOME/.bashrc"
 	;;
 esac
 
