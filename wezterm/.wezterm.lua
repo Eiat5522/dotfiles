@@ -10,9 +10,17 @@ config.default_prog = { "wsl.exe", "~", "-d", "Ubuntu-24.04", "--exec", "bash", 
 config.ssh_domains = {
 	{
 		-- This name identifies the domain
-		name = "my.server",
+		name = "my.ssh.server",
 		remote_address = "localhost:22",
 		username = "eiat",
+	},
+}
+-- -------------------  TLS Server  --------------------------------------------------  --
+config.tls_servers = {
+	{
+		-- The host:port combination on which the server will listen
+		-- for connections
+		bind_address = "my.tls.server:8080",
 	},
 }
 -- -------------------  Set Default WSL Domain  ----------------------- --

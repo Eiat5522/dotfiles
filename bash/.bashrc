@@ -433,4 +433,4 @@ unset __bashrc_codex_bin
 # shellcheck source=/dev/null
 [[ -f "$HOME/.config/broot/launcher/bash/br" ]] && source "$HOME/.config/broot/launcher/bash/br"
 
-eval "$(/bin/brew shellenv)"
+eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv bash)"

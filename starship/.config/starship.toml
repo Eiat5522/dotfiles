@@ -127,8 +127,8 @@ symbol = ""
 
 [hostname]
 ssh_only = true
-ssh_symbol = "🌐 "
-format = '[$ssh_symbol$hostname]($style) in '
+ssh_symbol = "🌐"
+format = '[ssh $ssh_symbol in $hostname]($style)'
 disabled = false
 
 [username]
@@ -160,7 +160,7 @@ style = "bg:mauve fg:#b6b7bb"
 
 [os.symbols]
 Windows = ""
-Ubuntu = "  "        #  
+Ubuntu = "  "
 SUSE = ""
 Raspbian = "󰐿"
 Mint = "󰣭"
