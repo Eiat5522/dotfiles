@@ -1,6 +1,7 @@
 local wezterm = require("wezterm")
 local launch_menu = {}
 local act = wezterm.action
+local tabline = wezterm.plugin.require("https://github.com/michaelbrusegard/tabline.wez")
 local config = wezterm.config_builder()
 -- ----------------------- My Configuration Starts Here  ---------------------------- --
 config.default_domain = "Ubuntu-24.04"
@@ -32,10 +33,8 @@ config.launch_menu = {
 		args = { "wsl.exe", "-d", "Ubuntu-24.04", "--exec", "bash", "-l" },
 		set_environment_variables = {
 			prompt = "$E]7;file://localhost/$P$E\\$E[32m$T$E[0m $E[35m$P$E[36m$_$G$E[0m ",
+			cwd = "/home/eiat",
 		},
-		--args = { "bash", "-l" },
-		--domain = 'DefaultDomain',
-		--		--cwd = "home/eiat/projects"
 	},
 }
 -- ---------------------------------------------------------------------------------- --
@@ -54,7 +53,7 @@ config.wsl_domains = {
 config.ssh_domains = {
 	{
 		-- This name identifies the domain
-		name = "my.server",
+		name = "my.ssh.server",
 		remote_address = "127.0.0.1:22",
 		username = "eiat",
 		multiplexing = "WezTerm",
@@ -75,30 +74,33 @@ config.ssh_domains = {
 		remote_wezterm_path = "/usr/bin/wezterm",
 	},
 }
---end --------------------------- Unix Domain Configuration  ---------------------------- --
-config.unix_domains =
+-- ------------------------------ Unix Domain Configuration  ---------------------------- --
+config.unix_domains = {
 	{
-		{
-			name = "unix",
-			skip_permissions_check = true,
-			socket_path = "C:\\Users\\Dev\\.local\\share\\wezterm\\unix-mux.sock",
-			local_echo_threshold_ms = 10,
-			no_serve_automatically = false,
-		},
+		name = "unix",
+		skip_permissions_check = true,
+		socket_path = "C:\\Users\\Dev\\.local\\share\\wezterm\\unix-mux.sock",
+		-- proxy_command = { 'nc', '-U', '/Users/Dev/.local/share/wezterm/sock' },
+		local_echo_threshold_ms = 10,
+		no_serve_automatically = false,
 	},
-	-- This causes `wezterm` to act as though it was started as `wezterm connect unix`
-	-- by default, connecting to the unix domain on `wezterm` startup.
-	-- config.default_gui_startup_args = { 'connect', 'local' }
-	-- ----------------------------------------------------------------------------------- --
-	-- Informing `wezterm` that all hosts are unix machines, so spawning a tab in the same directory
-	-- as an existing tab work even for a plain SSH session:
-	config.ssh_domains == wezterm.default_ssh_domains()
-for _, dom in ipairs(config.ssh_domains) do
-	dom.assume_shell = "Posix"
-end
+}
+-- -------------------  TLS Domain MUX Domain  --------------------------------------- --
+config.tls_clients = {
+	{
+		-- A handy alias for this session; you will use `wezterm connect server.name`
+		-- to connect to it.
+		name = "my.tls.server",
+		-- The host:port for the remote host
+		remote_address = "127.0.0.1:8080",
+		-- The value can be "user@host:port"; it accepts the same syntax as the
+		-- `wezterm ssh` subcommand.
+		bootstrap_via_ssh = "eiat@wsl-ubuntu",
+	},
+}
 -- -------------------  Set Default_Multiplexer_Server_Domain  ----------------------- --
---  config.default_mux_server_domain == "wsl_domains"
---active -------------------  Set Default WSL Domain  ----------------------- --
+-- config.default_mux_server_domain = "wsl_domains"
+-- -------------------  Set Default WSL Domain  ----------------------- --
 -- ---------------------- Aesthetic Settings ---------------------------- --
 config.color_scheme = "tokyonight"
 config.window_background_opacity = 0.98
@@ -107,11 +109,11 @@ config.window_padding = { left = 0, right = 0, top = 0, bottom = 0 }
 config.allow_win32_input_mode = false
 -- -------------------  TAB BAR CONFIGURATION  ------------------------ --
 config.enable_tab_bar = true
-config.use_fancy_tab_bar = true
-config.hide_tab_bar_if_only_one_tab = true
-config.tab_bar_at_bottom = false
+config.use_fancy_tab_bar = false
+config.hide_tab_bar_if_only_one_tab = false
+config.tab_bar_at_bottom = true
 -- -----------------   SET WINDOW DECORATIONS   ---------------------- --
-config.window_decorations = "INTEGRATED_BUTTONS|RESIZE"
+config.window_decorations = "RESIZE"
 -- -------------- INTEGRATED TITLE BAR BUTTONS STYLE ----------------- --
 -- -----------  "Windows or  Gnome" -- Selectable Choice  ------------ --
 config.integrated_title_button_style = "Gnome"
@@ -204,6 +206,43 @@ local keys = {
 		}),
 	},
 }
+tabline.setup({
+	options = {
+		icons_enabled = true,
+		theme = "Catppuccin Mocha",
+		tabs_enabled = true,
+		theme_overrides = {},
+		section_separators = {
+			left = wezterm.nerdfonts.pl_left_hard_divider,
+			right = wezterm.nerdfonts.pl_right_hard_divider,
+		},
+		component_separators = {
+			left = wezterm.nerdfonts.pl_left_soft_divider,
+			right = wezterm.nerdfonts.pl_right_soft_divider,
+		},
+		tab_separators = {
+			left = wezterm.nerdfonts.pl_left_hard_divider,
+			right = wezterm.nerdfonts.pl_right_hard_divider,
+		},
+	},
+	sections = {
+		tabline_a = { "mode" },
+		tabline_b = { "workspace" },
+		tabline_c = { " " },
+		tab_active = {
+			"index",
+			--			{ "parent", padding = 0 },
+			--			"/",
+			{ "cwd", padding = { left = 0, right = 1 } },
+			{ "zoomed", padding = 0 },
+		},
+		tab_inactive = { "index", { "process", padding = { left = 0, right = 1 } } },
+		tabline_x = { "ram" },
+		tabline_y = { "" },
+		tabline_z = { "domain" },
+	},
+	extensions = { "resurrect", "smart_workspace_switcher" },
+})
 
 launch_menu = launch_menu
 config.mouse_bindings = mouse_bindings
