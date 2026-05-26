@@ -2,7 +2,124 @@ local wezterm = require("wezterm")
 local launch_menu = {}
 local act = wezterm.action
 local tabline = wezterm.plugin.require("https://github.com/michaelbrusegard/tabline.wez")
+local workspace_switcher = wezterm.plugin.require("https://github.com/MLFlexer/smart_workspace_switcher.wezterm")
+local resurrect = wezterm.plugin.require("https://github.com/MLFlexer/resurrect.wezterm")
 local config = wezterm.config_builder()
+
+local resurrect_state_dir = wezterm.home_dir .. "\\.local\\share\\wezterm\\resurrect"
+
+local function get_workspace_state_path(name)
+	return string.format(
+		"%s\\workspace\\%s.json",
+		resurrect.state_manager.save_state_dir,
+		name:gsub("[/\\]", "+")
+	)
+end
+
+local function has_workspace_state(name)
+	local file = io.open(get_workspace_state_path(name), "r")
+	if file then
+		file:close()
+		return true
+	end
+
+	return false
+end
+
+local function save_current_workspace_state()
+	local workspace_state = resurrect.workspace_state.get_workspace_state()
+	resurrect.state_manager.save_state(workspace_state)
+	resurrect.state_manager.write_current_state(workspace_state.workspace, "workspace")
+end
+
+local function restore_workspace_state(window, workspace_name)
+	if not has_workspace_state(workspace_name) then
+		resurrect.state_manager.write_current_state(workspace_name, "workspace")
+		return
+	end
+
+	local state = resurrect.state_manager.load_state(workspace_name, "workspace")
+	if state.window_states and #state.window_states > 0 then
+		resurrect.workspace_state.restore_workspace(state, {
+			window = window,
+			relative = true,
+			restore_text = true,
+			resize_window = false,
+			on_pane_restore = resurrect.tab_state.default_on_pane_restore,
+		})
+	end
+
+	resurrect.state_manager.write_current_state(workspace_name, "workspace")
+end
+
+local function restore_saved_state(win, pane)
+	resurrect.fuzzy_loader.fuzzy_load(win, pane, function(id)
+		local state_type = string.match(id, "^([^/]+)")
+		local state_name = string.match(id, "([^/]+)$")
+		state_name = state_name and string.match(state_name, "(.+)%..+$")
+
+		if not state_type or not state_name then
+			return
+		end
+
+		local opts = {
+			relative = true,
+			restore_text = true,
+			resize_window = false,
+			on_pane_restore = resurrect.tab_state.default_on_pane_restore,
+		}
+
+		if state_type == "workspace" then
+			local state = resurrect.state_manager.load_state(state_name, "workspace")
+			if state.window_states and #state.window_states > 0 then
+				opts.spawn_in_workspace = true
+				resurrect.workspace_state.restore_workspace(state, opts)
+				wezterm.mux.set_active_workspace(state_name)
+				resurrect.state_manager.write_current_state(state_name, "workspace")
+			end
+		elseif state_type == "window" then
+			local state = resurrect.state_manager.load_state(state_name, "window")
+			if state.tabs and #state.tabs > 0 then
+				resurrect.window_state.restore_window(pane:window(), state, opts)
+			end
+		elseif state_type == "tab" then
+			local state = resurrect.state_manager.load_state(state_name, "tab")
+			if state.pane_tree then
+				resurrect.tab_state.restore_tab(pane:tab(), state, opts)
+			end
+		end
+	end)
+end
+
+resurrect.state_manager.change_state_save_dir(resurrect_state_dir)
+resurrect.state_manager.set_max_nlines(5000)
+resurrect.state_manager.periodic_save({
+	interval_seconds = 15 * 60,
+	save_workspaces = true,
+})
+
+wezterm.on("gui-startup", function()
+	local ok = resurrect.state_manager.resurrect_on_gui_startup()
+	if not ok then
+		resurrect.state_manager.write_current_state(wezterm.mux.get_active_workspace(), "workspace")
+	end
+end)
+
+wezterm.on("smart_workspace_switcher.workspace_switcher.selected", function()
+	save_current_workspace_state()
+end)
+
+wezterm.on("smart_workspace_switcher.workspace_switcher.created", function(window, _, label)
+	restore_workspace_state(window, label)
+end)
+
+wezterm.on("smart_workspace_switcher.workspace_switcher.chosen", function(_, workspace)
+	resurrect.state_manager.write_current_state(workspace, "workspace")
+end)
+
+wezterm.on("smart_workspace_switcher.workspace_switcher.switched_to_prev", function(_, _, workspace)
+	resurrect.state_manager.write_current_state(workspace, "workspace")
+end)
 -- ----------------------- My Configuration Starts Here  ---------------------------- --
 config.default_domain = "Ubuntu-24.04"
 -- -------------------------------------------------------------------------------- --
@@ -174,6 +291,30 @@ local keys = {
 	{ key = "Tab", mods = "CTRL|SHIFT", action = act.ActivateTabRelative(-1) },
 	-- Command palette
 	{ key = "p", mods = "CTRL|SHIFT", action = act.ActivateCommandPalette },
+	-- Workspace workflow
+	{ key = "s", mods = "LEADER", action = workspace_switcher.switch_workspace() },
+	{
+		key = "S",
+		mods = "LEADER|SHIFT",
+		action = wezterm.action_callback(function(window, pane)
+			save_current_workspace_state()
+			window:perform_action(workspace_switcher.switch_to_prev_workspace(), pane)
+		end),
+	},
+	{
+		key = "S",
+		mods = "LEADER|CTRL",
+		action = wezterm.action_callback(function()
+			save_current_workspace_state()
+		end),
+	},
+	{
+		key = "R",
+		mods = "LEADER|SHIFT",
+		action = wezterm.action_callback(function(win, pane)
+			restore_saved_state(win, pane)
+		end),
+	},
 	-- Show launcher menu
 	{
 		key = "l",

@@ -11,8 +11,8 @@ echo wezterm 2>&1 | tee .stow-local-ignore
 stow */
 ```
 
-## 2. Manually copy `.wezterm.lua` to your Windows's default user folder
+## 2. Manually copy the Windows WezTerm config to your Windows default user folder
 
 ```bash
-cp wezterm/.wezterm.lua /mnt/C/Users/<your_user_name>/.wezterm.lua
+cp wezterm/.wezterm.windows.lua /mnt/C/Users/<your_user_name>/.wezterm.lua
 ```
