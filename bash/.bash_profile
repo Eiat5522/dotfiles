@@ -2,7 +2,9 @@
 
 # Reuse ~/.profile when present for compatibility with other tools.
 # shellcheck source=/dev/null
+__BASH_PROFILE_SOURCED_PROFILE=1
 [ -f "$HOME/.profile" ] && . "$HOME/.profile"
+unset __BASH_PROFILE_SOURCED_PROFILE
 
 # PATH helpers (idempotent).
 path_prepend() {
@@ -134,3 +136,8 @@ case $- in
 esac
 
 export PATH
+
+# Source interactive bash customizations after login-time environment setup so
+# prompt integrations can find their executables on PATH.
+# shellcheck source=/dev/null
+[ -f "$HOME/.bashrc" ] && . "$HOME/.bashrc"

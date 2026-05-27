@@ -20,7 +20,7 @@ config.tls_servers = {
 	{
 		-- The host:port combination on which the server will listen
 		-- for connections
-		bind_address = "my.tls.server:8080",
+		bind_address = "my.tls.server:8000",
 	},
 }
 -- -------------------  Set Default WSL Domain  ----------------------- --

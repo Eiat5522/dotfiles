@@ -436,3 +436,4 @@ unset __bashrc_codex_bin
 eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv bash)"
 
 fastfetch
+. ~/.bash.d/cht.sh
