@@ -11,7 +11,7 @@ config.ssh_domains = {
 	{
 		-- This name identifies the domain
 		name = "my.ssh.server",
-		remote_address = "localhost:2222",
+		remote_address = "localhost:22",
 		username = "eiat",
 	},
 }
