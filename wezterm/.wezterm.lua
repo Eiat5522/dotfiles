@@ -2,16 +2,16 @@ local wezterm = require("wezterm")
 local act = wezterm.action
 local config = wezterm.config_builder()
 -- ----------------------- My Configuration Starts Here  ---------------------------- --
-config.default_domain = "Ubuntu-24.04"
+config.default_domain = "local"
 -- -------------------------------------------------------------------------------- --
-config.default_prog = { "wsl.exe", "~", "-d", "Ubuntu-24.04", "--exec", "bash", "-l" }
+config.default_prog = { "bash", "-l" }
 -- -------------------- ---- MULTIPLEXER SERVER DOMAINS  ---------------------------- --
 -- ------------------------- SSH Domains Configuration  ----------------------------- --
 config.ssh_domains = {
 	{
 		-- This name identifies the domain
 		name = "my.ssh.server",
-		remote_address = "localhost:22",
+		remote_address = "localhost:2222",
 		username = "eiat",
 	},
 }
@@ -20,20 +20,13 @@ config.tls_servers = {
 	{
 		-- The host:port combination on which the server will listen
 		-- for connections
-		bind_address = "my.tls.server:8000",
+		bind_address = "0.0.0.0:8080",
 	},
 }
--- -------------------  Set Default WSL Domain  ----------------------- --
-for _, dom in ipairs(config.wsl_domains) do
-	if dom.name == "Ubuntu-24.04" then
-		dom.default_prog = { "bash", "-l" }
-	end
-end
--- --------------------- General Configuration ------------------------ --
 -- ---------------------- Astetic Settings ---------------------------- --
 config.color_scheme = "tokyonight"
 config.window_background_opacity = 0.98
-config.font_size = 13
+config.font_size = 14
 config.window_padding = { left = 0, right = 0, top = 0, bottom = 0 }
 config.allow_win32_input_mode = false
 -- -------------------  TAB BAR CONFIGURATION  ------------------------ --
@@ -59,7 +52,7 @@ config.hide_mouse_cursor_when_typing = true
 -- ---------- QUALITY OF LIFE ----------
 config.audible_bell = "SystemBeep"
 config.warn_about_missing_glyphs = true
-config.enable_wayland = false -- helps with WSL graphics consistency
+config.enable_wayland = true
 -- --------------------------------------------------------------------- --
 -- ------------------------ Mouse Binding ------------------------------ --
 local mouse_bindings = {
