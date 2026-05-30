@@ -9,8 +9,8 @@ This skill provides comprehensive assistance for configuring WezTerm terminal em
 
 ## Configuration Location
 
-**Config Directory:** `/Users/alex/.config/wezterm`
-**Main Config File:** `/Users/alex/.config/wezterm/wezterm.lua`
+**Config Directory:** `/Users/Dev/.config/wezterm`
+**Main Config File:** `/Users/Dev/.config/wezterm/wezterm.lua`
 
 Alternative locations: `~/.wezterm.lua` or paths specified via `$WEZTERM_CONFIG_FILE`
 

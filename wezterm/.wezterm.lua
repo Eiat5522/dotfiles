@@ -1,60 +1,83 @@
 local wezterm = require("wezterm")
 local act = wezterm.action
 local config = wezterm.config_builder()
--- ----------------------- My Configuration Starts Here  ---------------------------- --
+local is_wsl = wezterm.running_under_wsl()
+local local_domain = { DomainName = "local" }
+
+local function open_cht_sh(window, pane, line)
+	if not line then
+		return
+	end
+
+	local query = line:match("^%s*(.-)%s*$")
+	local command = "cht.sh --shell=bash --mode=auto"
+	if query ~= "" then
+		command = command .. " " .. string.format("%q", query)
+	end
+
+	window:perform_action(
+		act.SpawnCommandInNewWindow({
+			label = query ~= "" and ("cht.sh: " .. query) or "cht.sh",
+			args = { "bash", "-lc", command },
+			domain = local_domain,
+			position = { x = 100, y = 50 },
+		}),
+		pane
+	)
+end
+-- ----------------------- My Configuration Starts Here  ------------------------------ --
 config.default_domain = "local"
--- -------------------------------------------------------------------------------- --
-config.default_prog = { "bash", "-l" }
--- -------------------- ---- MULTIPLEXER SERVER DOMAINS  ---------------------------- --
--- ------------------------- SSH Domains Configuration  ----------------------------- --
-config.ssh_domains = {
-	{
-		-- This name identifies the domain
-		name = "my.ssh.server",
-		remote_address = "localhost:22",
-		username = "eiat",
-	},
-}
--- -------------------  TLS Server  --------------------------------------------------  --
+-- -----------------------------  Set default shell  ---------------------------------- --
+config.default_prog = { "bash" }
+-- -------------------------  MUX Server Configuration  ------------------------------- --
+config.default_mux_server_domain = "local"
+-- ------------------------------------------------------------------------------------ --
+-- ------------------------  MULTIPLEXER SERVER DOMAINS  ------------------------------ --
+-- ------------------------------------------------------------------------------------ --
+-- ------------------------- SSH Domains Configuration  ------------------------------- --
+config.ssh_domains = wezterm.default_ssh_domains()
+for _, dom in ipairs(config.ssh_domains) do
+	dom.assume_shell = "Posix"
+end
+
+-- -----------------------------  TLS Server  ----------------------------------------  --
 config.tls_servers = {
 	{
-		-- The host:port combination on which the server will listen
-		-- for connections
-		bind_address = "0.0.0.0:8080",
+		bind_address = "127.0.0.1:8080",
 	},
 }
--- ---------------------- Astetic Settings ---------------------------- --
+-- ------------------------- UI Settings ---------------------------------------------- --
 config.color_scheme = "tokyonight"
 config.window_background_opacity = 0.98
-config.font_size = 14
+config.font_size = 15
 config.window_padding = { left = 0, right = 0, top = 0, bottom = 0 }
-config.allow_win32_input_mode = false
--- -------------------  TAB BAR CONFIGURATION  ------------------------ --
+config.allow_win32_input_mode = true
+-- ------------------------  TAB BAR CONFIGURATION  ----------------------------------- --
 config.enable_tab_bar = true
 config.use_fancy_tab_bar = true
-config.hide_tab_bar_if_only_one_tab = true
+config.hide_tab_bar_if_only_one_tab = false
 config.tab_bar_at_bottom = false
--- -----------------   SET WINDOW DECORATIONS   ---------------------- --
+-- -----------------   SET WINDOW DECORATIONS   --------------------------------------- --
 config.window_decorations = "INTEGRATED_BUTTONS|RESIZE"
--- -------------- INTEGRATED TITLE BAR BUTTONS STYLE ----------------- --
--- -----------  "Windows or  Gnome" -- Selectable Choice  ------------ --
+-- -------------- INTEGRATED TITLE BAR BUTTONS STYLE ---------------------------------- --
+-- ---------------  "Windows or  Gnome" -- Selectable Choice  ------------------------- --
 config.integrated_title_button_style = "Gnome"
-config.integrated_title_buttons = { "Hide", "Maximize", "Close" }
+config.integrated_title_buttons = { "Hide", "Close" }
 config.integrated_title_button_alignment = "Right"
 config.integrated_title_button_color = "Auto"
--- ----------- CURSOR SETTINGS ------------- --
+-- ------------------------- CURSOR SETTINGS ------------------------------------------ --
 config.default_cursor_style = "BlinkingBlock"
 config.cursor_blink_rate = 500
 config.underline_thickness = "2px"
--- ----------- Extras ------------- --
+-- --------------------------------  Extras  ------------------------------------------ --
 config.enable_scroll_bar = true
 config.hide_mouse_cursor_when_typing = true
--- ---------- QUALITY OF LIFE ----------
+-- ----------------------------  QUALITY OF LIFE  ------------------------------------- --
 config.audible_bell = "SystemBeep"
 config.warn_about_missing_glyphs = true
 config.enable_wayland = true
--- --------------------------------------------------------------------- --
--- ------------------------ Mouse Binding ------------------------------ --
+-- ------------------------------------------------------------------------------------ --
+-- -----------------------------  Mouse Binding  -------------------------------------- --
 local mouse_bindings = {
 	-- Bind 'Up' event of CTRL-Click to open hyperlinks
 	{
@@ -69,14 +92,14 @@ local mouse_bindings = {
 		action = act.Nop,
 	},
 }
--- ---------------------------------------- Custom Key Binding ------------------------------------------------ --
+-- ---------------------------------------- Custom Key Binding ------------------------------------------- --
 config.leader = { key = "a", mods = "CTRL", timeout_milliseconds = 2000 } -- CTRL+a as a "leader key" like tmux
 
 local keys = {
 	-- Pane splits (using current pane's domain and CWD)
 	{ key = "/", mods = "CTRL|ALT", action = act.SplitHorizontal({ domain = "CurrentPaneDomain" }) },
 	{ key = ".", mods = "CTRL|ALT", action = act.SplitVertical({ domain = "CurrentPaneDomain" }) },
-	-- Split panes in different directions with CRTL|ALT + ArrowKey
+	-- Split panes in different directions with CTRL|ALT + ArrowKey
 	{ key = "LeftArrow", mods = "CTRL|ALT", action = act.ActivatePaneDirection("Left") },
 	{ key = "RightArrow", mods = "CTRL|ALT", action = act.ActivatePaneDirection("Right") },
 	{ key = "UpArrow", mods = "CTRL|ALT", action = act.ActivatePaneDirection("Up") },
@@ -100,7 +123,7 @@ local keys = {
 	{
 		key = "l",
 		mods = "CTRL|ALT",
-		action = act.ShowLauncherArgs({ flags = "FUZZY|LAUNCH_MENU_ITEMS|DOMAINS|TABS|WORKSPACES" }),
+		action = act.ShowLauncherArgs({ flags = "FUZZY|LAUNCH_MENU_ITEMS|DOMAINS|WORKSPACES|TABS" }),
 	},
 	-- Send "CTRL-A" to the terminal when pressing CTRL-A, CTRL-A
 	{ key = "a", mods = "LEADER|CTRL", action = wezterm.action.SendKey({ key = "a", mods = "CTRL" }) },
@@ -124,6 +147,16 @@ local keys = {
 				if line then
 					window:active_tab():set_title(line)
 				end
+			end),
+		}),
+	},
+	{
+		key = "H",
+		mods = "CTRL|SHIFT",
+		action = act.PromptInputLine({
+			description = "Enter package or library for cht.sh",
+			action = wezterm.action_callback(function(window, pane, line)
+				open_cht_sh(window, pane, line)
 			end),
 		}),
 	},

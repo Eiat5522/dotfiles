@@ -435,5 +435,11 @@ unset __bashrc_codex_bin
 
 eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv bash)"
 
-fastfetch
 . ~/.bash.d/cht.sh
+
+nvm use default
+fastfetch
+
+
+# Added by Antigravity CLI installer
+export PATH="/home/eiat/.local/bin:$PATH"

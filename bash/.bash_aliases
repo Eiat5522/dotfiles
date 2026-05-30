@@ -22,18 +22,18 @@ alias aptudug='sudo apt update && apt upgrade'
 
 # enable color support of ls and also add handy aliases
 if [ -x /usr/bin/dircolors ]; then
-	if test -r ~/.dircolors; then
-		eval "$(dircolors -b ~/.dircolors)"
-	else
-		eval "$(dircolors -b)"
-	fi
-	alias ls='eza --color=auto --icons=auto --show-hidden --group-directories-first'
-	#alias dir='dir --color=auto'
-	#alias vdir='vdir --color=auto'
+  if test -r ~/.dircolors; then
+    eval "$(dircolors -b ~/.dircolors)"
+  else
+    eval "$(dircolors -b)"
+  fi
+  alias ls='eza --color=auto --icons=auto --show-hidden --group-directories-first'
+  #alias dir='dir --color=auto'
+  #alias vdir='vdir --color=auto'
 
-	alias grep='grep --color=auto'
-	alias fgrep='fgrep --color=auto'
-	alias egrep='egrep --color=auto'
+  alias grep='grep --color=auto'
+  alias fgrep='fgrep --color=auto'
+  alias egrep='egrep --color=auto'
 fi
 
 # Next level of an ls
@@ -72,11 +72,14 @@ alias fman="compgen -c | fzf | xargs man"
 # zoxide (called from ~/scripts/)
 alias nzo='$HOME/scripts/zoxide_openfiles_nvim.sh'
 
+# FastFetch alias
+alias ff="fastfetch"
+
 # alias for fzf-nova
 alias fzf-nova="$HOME/.local/share/fzf-nova/fzf-nova"
 
 # WSL: use SDK stored on Windows D: drive
 if [ -d "/mnt/d/Android/Sdk" ]; then
-	# Alias to run Android emulator with Windows paths (required for WSL)
-	alias android-emulator='cd /mnt/d && ANDROID_SDK_ROOT="D:\Android\Sdk" ANDROID_HOME="D:\Android\Sdk" /mnt/d/Android/Sdk/emulator/emulator.exe'
+  # Alias to run Android emulator with Windows paths (required for WSL)
+  alias android-emulator='cd /mnt/d && ANDROID_SDK_ROOT="D:\Android\Sdk" ANDROID_HOME="D:\Android\Sdk" /mnt/d/Android/Sdk/emulator/emulator.exe'
 fi

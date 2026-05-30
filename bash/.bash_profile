@@ -8,50 +8,50 @@ unset __BASH_PROFILE_SOURCED_PROFILE
 
 # PATH helpers (idempotent).
 path_prepend() {
-	case ":$PATH:" in
-	*":$1:"*) ;;
-	*) PATH="$1:$PATH" ;;
-	esac
+  case ":$PATH:" in
+  *":$1:"*) ;;
+  *) PATH="$1:$PATH" ;;
+  esac
 }
 
 path_append() {
-	case ":$PATH:" in
-	*":$1:"*) ;;
-	*) PATH="$PATH:$1" ;;
-	esac
+  case ":$PATH:" in
+  *":$1:"*) ;;
+  *) PATH="$PATH:$1" ;;
+  esac
 }
 
 # Optional PATH normalization:
 # - Set `PATH_CLEANUP_ENABLE=1` to enable.
 # - Set `PATH_CLEANUP_KEEP_MISSING=1` to keep entries that do not exist yet.
 path_normalize() {
-	local old_path="$1"
-	local entry cleaned=""
-	declare -A seen
+  local old_path="$1"
+  local entry cleaned=""
+  declare -A seen
 
-	IFS=':' read -r -a __path_parts <<<"$old_path"
-	for entry in "${__path_parts[@]}"; do
-		[ -n "$entry" ] || continue
-		[ "${seen[$entry]+_}" ] && continue
-		seen["$entry"]=1
+  IFS=':' read -r -a __path_parts <<<"$old_path"
+  for entry in "${__path_parts[@]}"; do
+    [ -n "$entry" ] || continue
+    [ "${seen[$entry]+_}" ] && continue
+    seen["$entry"]=1
 
-		if [ "${PATH_CLEANUP_KEEP_MISSING:-0}" = "1" ] || [ -d "$entry" ]; then
-			if [ -n "$cleaned" ]; then
-				cleaned="$cleaned:$entry"
-			else
-				cleaned="$entry"
-			fi
-		fi
-	done
+    if [ "${PATH_CLEANUP_KEEP_MISSING:-0}" = "1" ] || [ -d "$entry" ]; then
+      if [ -n "$cleaned" ]; then
+        cleaned="$cleaned:$entry"
+      else
+        cleaned="$entry"
+      fi
+    fi
+  done
 
-	PATH="$cleaned"
+  PATH="$cleaned"
 }
 
 unset JAVA_HOME
 if [ -x /usr/lib/jvm/java-17-openjdk-amd64/bin/javac ]; then
-	export JAVA_HOME="/usr/lib/jvm/java-17-openjdk-amd64"
+  export JAVA_HOME="/usr/lib/jvm/java-17-openjdk-amd64"
 elif [ -x /usr/lib/jvm/default-java/bin/javac ]; then
-	export JAVA_HOME="/usr/lib/jvm/default-java"
+  export JAVA_HOME="/usr/lib/jvm/default-java"
 fi
 [ -n "${JAVA_HOME:-}" ] && path_prepend "$JAVA_HOME/bin"
 
@@ -64,6 +64,8 @@ fi
 # shellcheck source=/dev/null
 [ -f "$HOME/.ghcup/env" ] && . "$HOME/.ghcup/env"
 
+path_prepend "/usr/bin"
+path_prepend "/usr/bin/wezterm-mux-server"
 path_prepend "$HOME/.opencode/bin"
 path_prepend "$HOME/bin"
 path_prepend "$HOME/.local/bin"
@@ -88,22 +90,22 @@ path_append "$HOME/.opencode/bin/opencode"
 export DOCKER_HOST="unix:///run/user/1000/docker.sock"
 
 if [ -z "${XDG_DATA_HOME}" ]; then
-	export PNPM_HOME="$HOME/.local/share/pnpm"
+  export PNPM_HOME="$HOME/.local/share/pnpm"
 else
-	export PNPM_HOME="$XDG_DATA_HOME/pnpm"
+  export PNPM_HOME="$XDG_DATA_HOME/pnpm"
 fi
 path_prepend "$PNPM_HOME"
 
 SDK_BASE="/mnt/d/Android/Sdk"
 if [ -d "$SDK_BASE" ]; then
-	export ANDROID_HOME="$SDK_BASE"
-	export ANDROID_SDK_ROOT="$SDK_BASE"
-	path_append "$ANDROID_HOME/platform-tools"
-	path_append "$ANDROID_HOME/emulator"
-	path_append "$ANDROID_HOME/cmdline-tools/latest/bin"
+  export ANDROID_HOME="$SDK_BASE"
+  export ANDROID_SDK_ROOT="$SDK_BASE"
+  path_append "$ANDROID_HOME/platform-tools"
+  path_append "$ANDROID_HOME/emulator"
+  path_append "$ANDROID_HOME/cmdline-tools/latest/bin"
 else
-	unset ANDROID_HOME
-	unset ANDROID_SDK_ROOT
+  unset ANDROID_HOME
+  unset ANDROID_SDK_ROOT
 fi
 unset SDK_BASE
 
@@ -128,11 +130,11 @@ export BROWSER="$HOME/.local/bin/wsl-browser"
 # Startup programs should run once per interactive login session.
 case $- in
 *i*)
-	if command -v ssh-agent >/dev/null 2>&1 && command -v ssh-add >/dev/null 2>&1; then
-		pgrep -u "$USER" ssh-agent >/dev/null || eval "$(ssh-agent -s)" >/dev/null
-		ssh-add -l >/dev/null 2>&1 || ssh-add "$HOME/.ssh/id_ed25519" >/dev/null 2>&1
-	fi
-	;;
+  if command -v ssh-agent >/dev/null 2>&1 && command -v ssh-add >/dev/null 2>&1; then
+    pgrep -u "$USER" ssh-agent >/dev/null || eval "$(ssh-agent -s)" >/dev/null
+    ssh-add -l >/dev/null 2>&1 || ssh-add "$HOME/.ssh/id_ed25519" >/dev/null 2>&1
+  fi
+  ;;
 esac
 
 export PATH
@@ -141,3 +143,7 @@ export PATH
 # prompt integrations can find their executables on PATH.
 # shellcheck source=/dev/null
 [ -f "$HOME/.bashrc" ] && . "$HOME/.bashrc"
+
+
+# Added by Antigravity CLI installer
+export PATH="/home/eiat/.local/bin:$PATH"

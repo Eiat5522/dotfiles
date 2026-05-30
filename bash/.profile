@@ -35,3 +35,7 @@ if [ -n "$BASH_VERSION" ] && [ -z "${__BASH_PROFILE_SOURCED_PROFILE:-}" ]; then
 	. "$HOME/.bashrc"
     fi
 fi
+
+
+# Added by Antigravity CLI installer
+export PATH="/home/eiat/.local/bin:$PATH"
