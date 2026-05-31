@@ -1,7 +1,6 @@
 local wezterm = require("wezterm")
 local act = wezterm.action
 local config = wezterm.config_builder()
-local is_wsl = wezterm.running_under_wsl()
 local local_domain = { DomainName = "local" }
 
 local function open_cht_sh(window, pane, line)
@@ -27,49 +26,41 @@ local function open_cht_sh(window, pane, line)
 end
 -- ----------------------- My Configuration Starts Here  ------------------------------ --
 config.default_domain = "local"
--- -----------------------------  Set default shell  ---------------------------------- --
-config.default_prog = { "bash" }
--- -------------------------  MUX Server Configuration  ------------------------------- --
-config.default_mux_server_domain = "local"
 -- ------------------------------------------------------------------------------------ --
--- ------------------------  MULTIPLEXER SERVER DOMAINS  ------------------------------ --
--- ------------------------------------------------------------------------------------ --
-config.unix_domains = {
-	{
-		name = "unix",
-		local_echo_threshold_ms = 10,
-	},
-}
-
+config.default_prog = { "bash", "-lc", "wezterm-mux-server", "--daemonized" }
+-- -------------------- ---- MULTIPLEXER SERVER DOMAINS  ------------------------------ --
 -- ------------------------- SSH Domains Configuration  ------------------------------- --
-config.ssh_domains = wezterm.default_ssh_domains()
-for _, dom in ipairs(config.ssh_domains) do
-	dom.assume_shell = "Posix"
-end
+-- config.ssh_domains = wezterm.default_ssh_domains()
+-- for _, dom in ipairs(config.ssh_domains) do
+--	dom.assume_shell = "Posix"
+--end
+-- ------------------------  SSH Server Configuration  -------------------------------  --
 
 -- -----------------------------  TLS Server  ----------------------------------------  --
 config.tls_servers = {
 	{
-		bind_address = os.getenv("WEZTERM_TLS_BIND_ADDRESS") or "127.0.0.1:18080",
+		bind_address = "0.0.0.0:8080",
 	},
 }
+-- --------------------    MUX Server Configuration  ---------------------------------  --
+config.default_mux_server_domain = "local"
 -- ------------------------- UI Settings ---------------------------------------------- --
 config.color_scheme = "tokyonight"
 config.window_background_opacity = 0.98
-config.font_size = 15
+config.font_size = 14
 config.window_padding = { left = 0, right = 0, top = 0, bottom = 0 }
-config.allow_win32_input_mode = true
+config.allow_win32_input_mode = false
 -- ------------------------  TAB BAR CONFIGURATION  ----------------------------------- --
 config.enable_tab_bar = true
 config.use_fancy_tab_bar = true
-config.hide_tab_bar_if_only_one_tab = false
+config.hide_tab_bar_if_only_one_tab = true
 config.tab_bar_at_bottom = false
 -- -----------------   SET WINDOW DECORATIONS   --------------------------------------- --
 config.window_decorations = "INTEGRATED_BUTTONS|RESIZE"
 -- -------------- INTEGRATED TITLE BAR BUTTONS STYLE ---------------------------------- --
 -- ---------------  "Windows or  Gnome" -- Selectable Choice  ------------------------- --
 config.integrated_title_button_style = "Gnome"
-config.integrated_title_buttons = { "Hide", "Close" }
+config.integrated_title_buttons = { "Hide", "Maximize", "Close" }
 config.integrated_title_button_alignment = "Right"
 config.integrated_title_button_color = "Auto"
 -- ------------------------- CURSOR SETTINGS ------------------------------------------ --
@@ -130,7 +121,7 @@ local keys = {
 	{
 		key = "l",
 		mods = "CTRL|ALT",
-		action = act.ShowLauncherArgs({ flags = "FUZZY|LAUNCH_MENU_ITEMS|DOMAINS|WORKSPACES|TABS" }),
+		action = act.ShowLauncherArgs({ flags = "FUZZY|LAUNCH_MENU_ITEMS|DOMAINS|TABS|WORKSPACES" }),
 	},
 	-- Send "CTRL-A" to the terminal when pressing CTRL-A, CTRL-A
 	{ key = "a", mods = "LEADER|CTRL", action = wezterm.action.SendKey({ key = "a", mods = "CTRL" }) },
