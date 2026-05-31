@@ -34,6 +34,13 @@ config.default_mux_server_domain = "local"
 -- ------------------------------------------------------------------------------------ --
 -- ------------------------  MULTIPLEXER SERVER DOMAINS  ------------------------------ --
 -- ------------------------------------------------------------------------------------ --
+config.unix_domains = {
+	{
+		name = "unix",
+		local_echo_threshold_ms = 10,
+	},
+}
+
 -- ------------------------- SSH Domains Configuration  ------------------------------- --
 config.ssh_domains = wezterm.default_ssh_domains()
 for _, dom in ipairs(config.ssh_domains) do
@@ -43,7 +50,7 @@ end
 -- -----------------------------  TLS Server  ----------------------------------------  --
 config.tls_servers = {
 	{
-		bind_address = "127.0.0.1:8080",
+		bind_address = os.getenv("WEZTERM_TLS_BIND_ADDRESS") or "127.0.0.1:18080",
 	},
 }
 -- ------------------------- UI Settings ---------------------------------------------- --
