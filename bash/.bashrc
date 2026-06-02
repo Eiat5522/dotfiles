@@ -319,7 +319,7 @@ if [[ "$TERM_PROGRAM" == "vscode" ]]; then
   # Prompt similar to your CMD example:
   # green time + purple path + newline + cyan >
   PS1='\[\e[32m\]\t\[\e[0m\] \[\e[35m\]\w\[\e[0m\]\n\[\e[36m\]>\[\e[0m\] '
-terminfoterminfo
+  terminfoterminfo
 else
   # Normal terminals: use Starship (cached init for fast startup)
   export STARSHIP_CONFIG="$HOME/.config/starship.toml"
@@ -435,11 +435,8 @@ unset __bashrc_codex_bin
 
 eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv bash)"
 
+# shellcheck source=/dev/null
 . ~/.bash.d/cht.sh
 
 nvm use default
 fastfetch
-
-
-# Added by Antigravity CLI installer
-export PATH="/home/eiat/.local/bin:$PATH"

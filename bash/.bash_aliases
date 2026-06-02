@@ -83,3 +83,6 @@ if [ -d "/mnt/d/Android/Sdk" ]; then
   # Alias to run Android emulator with Windows paths (required for WSL)
   alias android-emulator='cd /mnt/d && ANDROID_SDK_ROOT="D:\Android\Sdk" ANDROID_HOME="D:\Android\Sdk" /mnt/d/Android/Sdk/emulator/emulator.exe'
 fi
+
+# Alias for cht.sh (cheat.sh)
+alias cht="cht.sh --shell=bash --mode=auto --color=always"
