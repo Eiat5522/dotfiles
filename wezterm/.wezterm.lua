@@ -27,7 +27,7 @@ end
 -- ----------------------- My Configuration Starts Here  ------------------------------ --
 config.default_domain = "local"
 -- ------------------------------------------------------------------------------------ --
-config.default_prog = { "bash", "-lc", "wezterm-mux-server", "--daemonized" }
+config.default_prog = { "bash", "-l" }
 -- -------------------- ---- MULTIPLEXER SERVER DOMAINS  ------------------------------ --
 -- ------------------------- SSH Domains Configuration  ------------------------------- --
 -- config.ssh_domains = wezterm.default_ssh_domains()
@@ -37,11 +37,13 @@ config.default_prog = { "bash", "-lc", "wezterm-mux-server", "--daemonized" }
 -- ------------------------  SSH Server Configuration  -------------------------------  --
 
 -- -----------------------------  TLS Server  ----------------------------------------  --
-config.tls_servers = {
-	{
-		bind_address = "0.0.0.0:8080",
-	},
-}
+-- Disabled: binding this TLS server conflicts with the mux server listener and
+-- leaves the SSH/Unix mux socket unable to answer version probes.
+-- config.tls_servers = {
+-- 	{
+-- 		bind_address = "0.0.0.0:8080",
+-- 	},
+-- }
 -- --------------------    MUX Server Configuration  ---------------------------------  --
 config.default_mux_server_domain = "local"
 -- ------------------------- UI Settings ---------------------------------------------- --
