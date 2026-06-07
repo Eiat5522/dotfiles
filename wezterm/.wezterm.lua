@@ -43,6 +43,17 @@ config.ssh_domains = {
 -- for _, dom in ipairs(config.ssh_domains) do
 --	dom.assume_shell = "Posix"
 --end
+
+-- Unix Domains for WSL Integration
+config.unix_domains = {
+  {
+    name = 'wsl',
+    serve_command = { 'wsl', 'wezterm-mux-server', '--daemonize' },
+    -- Optional: specify socket path if needed; default is fine.
+    -- skip_permissions_check = true, -- may be needed on NTFS
+  },
+}
+config.default_gui_startup_args = { 'connect', 'wsl' }
 -- ------------------------  SSH Server Configuration  -------------------------------  --
 
 -- -----------------------------  TLS Server  ----------------------------------------  --
