@@ -46,7 +46,7 @@ For tools that need configuration files on the Windows side (like WezTerm):
 3. **Install automatically** using `install-windows-configs.sh`:
    - The script auto-detects your Windows username
    - Copies config files from dotfiles to your Windows home directory
-   - Re-run after updates to refresh Windows-side configs
+   - This is not a live sync: re-run after updates to refresh Windows-side configs
 
 4. **Extend for new tools**:
    - Add your `.windows.*` file to the appropriate package directory
