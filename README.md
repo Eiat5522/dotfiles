@@ -15,7 +15,7 @@ cd ~/.dotfiles
 This will automatically:
 - Detect your environment (WSL2 or Linux)
 - Install WSL/Linux configurations using GNU Stow
-- Link Windows-side configs (if running in WSL2)
+- Install Windows-side configs (if running in WSL2)
 
 ### Manual Installation
 
@@ -43,14 +43,14 @@ For tools that need configuration files on the Windows side (like WezTerm):
    - Per-package: Add to `package/.stow-local-ignore`
    - Global: Add to root `.stow-local-ignore` with pattern `\package/.windows.*`
 
-3. **Link automatically** using `install-windows-configs.sh`:
+3. **Install automatically** using `install-windows-configs.sh`:
    - The script auto-detects your Windows username
-   - Creates symlinks from dotfiles to Windows home directory
-   - Updates automatically when you pull changes
+   - Copies config files from dotfiles to your Windows home directory
+   - Re-run after updates to refresh Windows-side configs
 
 4. **Extend for new tools**:
    - Add your `.windows.*` file to the appropriate package directory
-   - Update `install-windows-configs.sh` to link the new file
+   - Update `install-windows-configs.sh` to install the new file
    - Add ignore pattern to `.stow-local-ignore`
 
 ### Example: Adding a New Windows Config
@@ -62,8 +62,8 @@ echo "config content" > myapp/.myapp.windows.conf
 # 2. Add to package's .stow-local-ignore
 echo "*.windows.*" >> myapp/.stow-local-ignore
 
-# 3. Update install-windows-configs.sh to link it
-# (Edit the script to add your linking command)
+# 3. Update install-windows-configs.sh to install it
+# (Edit the script to add your copy command)
 
 # 4. Run the installation
 ./install-windows-configs.sh
@@ -75,7 +75,7 @@ echo "*.windows.*" >> myapp/.stow-local-ignore
 make help              # Show all available commands
 make install           # Full setup (WSL + Windows)
 make install-wsl       # Install WSL configs only
-make install-windows   # Link Windows-side configs
+make install-windows   # Install Windows-side configs
 make uninstall         # Remove all symlinks
 ./bootstrap.sh         # One-command automated setup
 ```

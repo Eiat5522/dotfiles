@@ -1,5 +1,5 @@
 #!/bin/bash
-# Automatically link Windows-side configs for WSL2
+# Automatically copy Windows-side configs for WSL2
 
 set -e
 
@@ -21,15 +21,19 @@ if [ ! -d "$WINDOWS_HOME" ]; then
     exit 1
 fi
 
-echo "🪟 Linking Windows-side configurations..."
+echo "🪟 Installing Windows-side configurations..."
 echo "   Windows User: ${WINDOWS_USER}"
 echo "   Windows Home: ${WINDOWS_HOME}"
 echo ""
 
-# Link WezTerm config
+# Install WezTerm config
 if [ -f "${SCRIPT_DIR}/wezterm/.wezterm.windows.lua" ]; then
-    ln -sf "${SCRIPT_DIR}/wezterm/.wezterm.windows.lua" "${WINDOWS_HOME}/.wezterm.lua"
-    echo "✓ WezTerm config linked: ${WINDOWS_HOME}/.wezterm.lua"
+    TARGET_PATH="${WINDOWS_HOME}/.wezterm.lua"
+    if [ -L "${TARGET_PATH}" ]; then
+        rm -f "${TARGET_PATH}"
+    fi
+    cp -f "${SCRIPT_DIR}/wezterm/.wezterm.windows.lua" "${TARGET_PATH}"
+    echo "✓ WezTerm config installed: ${TARGET_PATH}"
 else
     echo "⚠ WezTerm Windows config not found, skipping"
 fi
@@ -37,9 +41,9 @@ fi
 # Add future Windows configs here
 # Example:
 # if [ -f "${SCRIPT_DIR}/package/.config.windows" ]; then
-#     ln -sf "${SCRIPT_DIR}/package/.config.windows" "${WINDOWS_HOME}/.config"
-#     echo "✓ Package config linked"
+#     cp -f "${SCRIPT_DIR}/package/.config.windows" "${WINDOWS_HOME}/.config"
+#     echo "✓ Package config installed"
 # fi
 
 echo ""
-echo "✅ Windows configs linked successfully!"
+echo "✅ Windows configs installed successfully!"

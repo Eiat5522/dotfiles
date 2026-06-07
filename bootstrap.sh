@@ -53,5 +53,5 @@ echo "Next steps:"
 echo "  - Restart your shell or run: source ~/.bashrc"
 echo "  - Review configurations in your home directory"
 if [ "$IS_WSL" = true ]; then
-    echo "  - Windows configs have been linked to your Windows user directory"
+    echo "  - Windows configs have been installed to your Windows user directory"
 fi

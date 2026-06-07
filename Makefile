@@ -6,7 +6,7 @@ help:
 	@echo "Available targets:"
 	@echo "  make install         - Full setup (WSL + Windows configs)"
 	@echo "  make install-wsl     - Install WSL configs only (using GNU Stow)"
-	@echo "  make install-windows - Link Windows-side configs"
+	@echo "  make install-windows - Install Windows-side configs"
 	@echo "  make uninstall       - Remove all symlinks"
 	@echo "  make clean           - Clean up stow state"
 	@echo ""
