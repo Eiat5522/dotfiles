@@ -2,6 +2,7 @@ local wezterm = require("wezterm")
 local act = wezterm.action
 local config = wezterm.config_builder()
 local is_wsl = wezterm.running_under_wsl()
+-- Shell integration is enabled via install script; ensure you run 'wezterm install-shell-integration' in your shell.
 
 local function open_cht_sh(window, pane, line)
 	if not line then
