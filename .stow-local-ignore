@@ -1,1 +1,22 @@
-\wezterm/.wezterm.windows.lua
+# Windows-side configuration files (matched by pattern)
+.*\.windows\..*
+.*\.win\..*
+
+# Documentation and installation scripts
+README.*
+LICENSE.*
+.*\.md$
+install.*
+bootstrap.*
+Makefile
+
+# Git and IDE files
+\.git
+\.github
+\.vscode
+\.idea
+\.agents
+\.copilot
+
+# Stow-specific files
+\.stow-local-ignore

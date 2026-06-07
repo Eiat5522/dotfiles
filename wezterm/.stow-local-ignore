@@ -1,1 +1,6 @@
-\wezterm.windows.lua
+# Windows-side configurations
+.*\.windows\..*
+.*\.win\..*
+
+# Other non-stowable files
+\.gitignore
