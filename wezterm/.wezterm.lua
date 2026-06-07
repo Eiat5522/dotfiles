@@ -1,7 +1,7 @@
 local wezterm = require("wezterm")
 local act = wezterm.action
 local config = wezterm.config_builder()
-local local_domain = { DomainName = "local" }
+local is_wsl = wezterm.running_under_wsl()
 
 local function open_cht_sh(window, pane, line)
 	if not line then
@@ -18,7 +18,7 @@ local function open_cht_sh(window, pane, line)
 		act.SpawnCommandInNewWindow({
 			label = query ~= "" and ("cht.sh: " .. query) or "cht.sh",
 			args = { "bash", "-lc", command },
-			domain = local_domain,
+			domain = "loca",
 			position = { x = 100, y = 50 },
 		}),
 		pane
@@ -27,8 +27,17 @@ end
 -- ----------------------- My Configuration Starts Here  ------------------------------ --
 config.default_domain = "local"
 -- ------------------------------------------------------------------------------------ --
-config.default_prog = { "bash", "-l" }
+config.default_prog = { "bash", "-lc", "wezterm-mux-server", "--daemonized" }
 -- -------------------- ---- MULTIPLEXER SERVER DOMAINS  ------------------------------ --
+-- SSH Domains Configuration
+config.ssh_domains = {
+  {
+    name = 'my.remote.host',
+    remote_address = 'example.com:22',
+    username = 'eiat',
+    -- assume_shell = 'Posix', -- optional
+  },
+}
 -- ------------------------- SSH Domains Configuration  ------------------------------- --
 -- config.ssh_domains = wezterm.default_ssh_domains()
 -- for _, dom in ipairs(config.ssh_domains) do
@@ -37,13 +46,11 @@ config.default_prog = { "bash", "-l" }
 -- ------------------------  SSH Server Configuration  -------------------------------  --
 
 -- -----------------------------  TLS Server  ----------------------------------------  --
--- Disabled: binding this TLS server conflicts with the mux server listener and
--- leaves the SSH/Unix mux socket unable to answer version probes.
--- config.tls_servers = {
--- 	{
--- 		bind_address = "0.0.0.0:8080",
--- 	},
--- }
+config.tls_servers = {
+	{
+		bind_address = "0.0.0.0:8080",
+	},
+}
 -- --------------------    MUX Server Configuration  ---------------------------------  --
 config.default_mux_server_domain = "local"
 -- ------------------------- UI Settings ---------------------------------------------- --
