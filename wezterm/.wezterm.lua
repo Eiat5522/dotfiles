@@ -54,6 +54,14 @@ config.unix_domains = {
   },
 }
 config.default_gui_startup_args = { 'connect', 'wsl' }
+-- TLS Clients for encrypted multiplexing
+config.tls_clients = {
+  {
+    name = 'tls.server.example', -- alias used with `wezterm connect`
+    remote_address = 'example.com:8080', -- host:port for TLS traffic
+    bootstrap_via_ssh = 'example.com', -- SSH host to launch server
+  },
+}
 -- ------------------------  SSH Server Configuration  -------------------------------  --
 
 -- -----------------------------  TLS Server  ----------------------------------------  --
