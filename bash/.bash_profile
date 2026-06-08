@@ -147,3 +147,5 @@ export PATH
 
 # Added by Antigravity CLI installer
 export PATH="/home/eiat/.local/bin:$PATH"
+
+SF_AC_BASH_SETUP_PATH="$HOME/.cache/sf/autocomplete/bash_setup" && test -f "$SF_AC_BASH_SETUP_PATH" && source "$SF_AC_BASH_SETUP_PATH"; # sf autocomplete setup

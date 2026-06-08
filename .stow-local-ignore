@@ -3,6 +3,11 @@
 .*\.win\..*
 
 # Documentation and installation scripts
+# Windows-side configuration files
+.*\.windows\..*
+.*\.win\..*
+
+# Documentation and installer files
 README.*
 LICENSE.*
 .*\.md$

@@ -2,7 +2,25 @@ local wezterm = require("wezterm")
 local act = wezterm.action
 local config = wezterm.config_builder()
 local is_wsl = wezterm.running_under_wsl()
--- Shell integration is enabled via install script; ensure you run 'wezterm install-shell-integration' in your shell.
+local local_domain = { DomainName = "local" }
+local tls_domain_name = "local-tls"
+local tls_cert_dir = wezterm.home_dir .. "/.local/share/wezterm/tls"
+
+local function file_exists(path)
+	local handle = io.open(path, "r")
+	if handle then
+		handle:close()
+		return true
+	end
+
+	return false
+end
+
+local have_tls_certs = file_exists(tls_cert_dir .. "/server.pem")
+	and file_exists(tls_cert_dir .. "/server.key")
+	and file_exists(tls_cert_dir .. "/client.pem")
+	and file_exists(tls_cert_dir .. "/client.key")
+	and file_exists(tls_cert_dir .. "/ca.pem")
 
 local function open_cht_sh(window, pane, line)
 	if not line then
@@ -19,7 +37,7 @@ local function open_cht_sh(window, pane, line)
 		act.SpawnCommandInNewWindow({
 			label = query ~= "" and ("cht.sh: " .. query) or "cht.sh",
 			args = { "bash", "-lc", command },
-			domain = "loca",
+			domain = local_domain,
 			position = { x = 100, y = 50 },
 		}),
 		pane
@@ -27,50 +45,43 @@ local function open_cht_sh(window, pane, line)
 end
 -- ----------------------- My Configuration Starts Here  ------------------------------ --
 config.default_domain = "local"
+-- Keep the TLS mux domain available for manual attach, but don't auto-connect
+-- it during GUI startup.
 -- ------------------------------------------------------------------------------------ --
-config.default_prog = { "bash", "-lc", "wezterm-mux-server", "--daemonized" }
+config.default_prog = { "bash", "-l" }
 -- -------------------- ---- MULTIPLEXER SERVER DOMAINS  ------------------------------ --
--- SSH Domains Configuration
-config.ssh_domains = {
-  {
-    name = 'my.remote.host',
-    remote_address = 'example.com:22',
-    username = 'eiat',
-    -- assume_shell = 'Posix', -- optional
-  },
-}
 -- ------------------------- SSH Domains Configuration  ------------------------------- --
--- config.ssh_domains = wezterm.default_ssh_domains()
--- for _, dom in ipairs(config.ssh_domains) do
---	dom.assume_shell = "Posix"
---end
-
--- Unix Domains for WSL Integration
-config.unix_domains = {
-  {
-    name = 'wsl',
-    serve_command = { 'wsl', 'wezterm-mux-server', '--daemonize' },
-    -- Optional: specify socket path if needed; default is fine.
-    -- skip_permissions_check = true, -- may be needed on NTFS
-  },
-}
-config.default_gui_startup_args = { 'connect', 'wsl' }
--- TLS Clients for encrypted multiplexing
-config.tls_clients = {
-  {
-    name = 'tls.server.example', -- alias used with `wezterm connect`
-    remote_address = 'example.com:8080', -- host:port for TLS traffic
-    bootstrap_via_ssh = 'example.com', -- SSH host to launch server
-  },
-}
+config.ssh_domains = wezterm.default_ssh_domains()
+for _, dom in ipairs(config.ssh_domains) do
+	dom.assume_shell = "Posix"
+end
 -- ------------------------  SSH Server Configuration  -------------------------------  --
 
 -- -----------------------------  TLS Server  ----------------------------------------  --
-config.tls_servers = {
-	{
-		bind_address = "0.0.0.0:8080",
-	},
-}
+if have_tls_certs then
+	config.tls_clients = {
+		{
+			name = tls_domain_name,
+			remote_address = "localhost:20808",
+			expected_cn = "localhost",
+			pem_private_key = tls_cert_dir .. "/client.key",
+			pem_cert = tls_cert_dir .. "/client.pem",
+			pem_ca = tls_cert_dir .. "/ca.pem",
+			local_echo_threshold_ms = 10,
+		},
+	}
+
+	config.tls_servers = {
+		{
+			-- The host:port combination on which the server will listen
+			-- for connections
+			bind_address = "127.0.0.1:20808",
+			pem_private_key = tls_cert_dir .. "/server.key",
+			pem_cert = tls_cert_dir .. "/server.pem",
+			pem_ca = tls_cert_dir .. "/ca.pem",
+		},
+	}
+end
 -- --------------------    MUX Server Configuration  ---------------------------------  --
 config.default_mux_server_domain = "local"
 -- ------------------------- UI Settings ---------------------------------------------- --
@@ -159,6 +170,11 @@ local keys = {
 		key = "d",
 		mods = "CTRL|SHIFT",
 		action = act.DetachDomain("CurrentPaneDomain"),
+	},
+	{
+		key = "A",
+		mods = "LEADER|SHIFT",
+		action = act.AttachDomain(tls_domain_name),
 	},
 	-- Rename Current Tab
 	{

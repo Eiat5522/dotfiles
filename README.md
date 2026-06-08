@@ -6,6 +6,12 @@ This repository manages dotfiles for Linux/WSL2 environments with special suppor
 
 ### One-Command Installation (Recommended)
 
+This repository manages dotfiles for Linux and WSL environments, with support for Windows-side config files.
+
+## Quick Start
+
+### One-Command Installation
+
 ```bash
 git clone https://github.com/Eiat5522/dotfiles ~/.dotfiles
 cd ~/.dotfiles
@@ -13,13 +19,22 @@ cd ~/.dotfiles
 ```
 
 This will automatically:
+
 - Detect your environment (WSL2 or Linux)
 - Install WSL/Linux configurations using GNU Stow
 - Install Windows-side configs (if running in WSL2)
 
 ### Manual Installation
 
-If you prefer more control:
+# If you prefer more control
+
+This will:
+
+- Detect whether you are on WSL
+- Install WSL/Linux configurations using GNU Stow
+- Copy Windows-side configs when running under WSL
+
+### Manual Installation
 
 ```bash
 # Install WSL/Linux configs only
@@ -88,3 +103,38 @@ make uninstall         # Remove all symlinks
   - macOS: `brew install stow`
 
 - **WSL2** (optional): Required for Windows-side config linking
+
+# Install Windows configs (WSL only)
+
+make install-windows
+
+# Install everything
+
+make install
+
+````
+
+## Managing Windows-side Files
+
+For tools that need a Windows copy of a config file, keep the source file in the repo with a `.windows.*` suffix.
+
+1. Put the Windows-specific file in the package directory.
+2. Keep it out of stow by adding the pattern to the package's `.stow-local-ignore` file.
+3. Re-run `./bootstrap.sh` or `make install-windows` whenever you update the file.
+
+### Example
+
+```bash
+wezterm/.wezterm.windows.lua
+````
+
+## Notes on Stow Ignores
+
+- Use `.stow-local-ignore` for package-local ignore rules.
+- Use `.stow-global-ignore` if you need a repo-wide ignore list for GNU Stow.
+- The root `.stow-local-ignore` in this repo is used for repo-level patterns that should not be stowed.
+
+## Requirements
+
+- GNU Stow
+- WSL if you want the Windows-side config installer
