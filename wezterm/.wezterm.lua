@@ -54,31 +54,29 @@ config.default_prog = { "bash", "-l" }
 config.ssh_domains = wezterm.default_ssh_domains()
 for _, dom in ipairs(config.ssh_domains) do
 	dom.assume_shell = "Posix"
+	if type(dom.remote_address) == "string" and dom.remote_address:match(":22$") then
+		dom.remote_address = dom.remote_address:gsub(":22$", ":2222")
+		dom.ssh_option = dom.ssh_option or {}
+		dom.ssh_option.port = "2222"
+	end
 end
 -- ------------------------  SSH Server Configuration  -------------------------------  --
 
 -- -----------------------------  TLS Server  ----------------------------------------  --
 if have_tls_certs then
-	config.tls_clients = {
-		{
-			name = tls_domain_name,
-			remote_address = "localhost:20808",
-			expected_cn = "localhost",
-			pem_private_key = tls_cert_dir .. "/client.key",
-			pem_cert = tls_cert_dir .. "/client.pem",
-			pem_ca = tls_cert_dir .. "/ca.pem",
-			local_echo_threshold_ms = 10,
-		},
-	}
-
 	config.tls_servers = {
 		{
-			-- The host:port combination on which the server will listen
-			-- for connections
 			bind_address = "127.0.0.1:20808",
 			pem_private_key = tls_cert_dir .. "/server.key",
 			pem_cert = tls_cert_dir .. "/server.pem",
 			pem_ca = tls_cert_dir .. "/ca.pem",
+		},
+	}
+else
+	-- bootstrap_via_ssh can provision certs dynamically, so only bind_address is needed here.
+	config.tls_servers = {
+		{
+			bind_address = "127.0.0.1:20808",
 		},
 	}
 end
