@@ -440,3 +440,4 @@ eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv bash)"
 
 nvm use default
 fastfetch
+[[ -r "$HOME/.bash_completion/alacritty" ]] && source "$HOME/.bash_completion/alacritty"
