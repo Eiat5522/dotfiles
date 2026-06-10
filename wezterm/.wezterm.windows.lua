@@ -2,8 +2,17 @@ local wezterm = require("wezterm")
 local mux = wezterm.mux
 local act = wezterm.action
 
-local tabline = wezterm.plugin.require("https://github.com/michaelbrusegard/tabline.wez")
-local toggle_terminal = wezterm.plugin.require("https://github.com/zsh-sage/toggle_terminal.wez")
+local function load_remote_plugin(url, name)
+	local ok, plugin = pcall(wezterm.plugin.require, url)
+	if not ok then
+		wezterm.log_warn("Failed to load remote plugin '" .. name .. "': " .. tostring(plugin))
+		return nil
+	end
+	return plugin
+end
+
+local tabline = load_remote_plugin("https://github.com/michaelbrusegard/tabline.wez", "tabline.wez")
+local toggle_terminal = load_remote_plugin("https://github.com/zsh-sage/toggle_terminal.wez", "toggle_terminal.wez")
 local plugin_root = wezterm.home_dir .. "/.config/wezterm/plugin"
 
 local function load_local_plugin(name)
@@ -239,53 +248,63 @@ if wezterm_sync then
 	wezterm_sync.apply_to_config(config)
 end
 
-tabline.setup({
-	options = {
-		icons_enabled = true,
-		theme = "Catppuccin Mocha",
-		tabs_enabled = true,
-		theme_overrides = {},
-		section_separators = {
-			left = wezterm.nerdfonts.pl_left_hard_divider,
-			right = wezterm.nerdfonts.pl_right_hard_divider,
+if tabline then
+	local ok, err = pcall(tabline.setup, {
+		options = {
+			icons_enabled = true,
+			theme = "Catppuccin Mocha",
+			tabs_enabled = true,
+			theme_overrides = {},
+			section_separators = {
+				left = wezterm.nerdfonts.pl_left_hard_divider,
+				right = wezterm.nerdfonts.pl_right_hard_divider,
+			},
+			component_separators = {
+				left = wezterm.nerdfonts.pl_left_soft_divider,
+				right = wezterm.nerdfonts.pl_right_soft_divider,
+			},
+			tab_separators = {
+				left = wezterm.nerdfonts.pl_left_hard_divider,
+				right = wezterm.nerdfonts.pl_right_hard_divider,
+			},
 		},
-		component_separators = {
-			left = wezterm.nerdfonts.pl_left_soft_divider,
-			right = wezterm.nerdfonts.pl_right_soft_divider,
+		sections = {
+			tabline_a = { "mode" },
+			tabline_b = { "workspace" },
+			tabline_c = { " " },
+			tab_active = {
+				"index",
+				{ "cwd", padding = { left = 0, right = 1 } },
+				{ "zoomed", padding = 0 },
+			},
+			tab_inactive = { "index", { "process", padding = { left = 0, right = 1 } } },
+			tabline_x = { "ram" },
+			tabline_y = { "" },
+			tabline_z = { "domain" },
 		},
-		tab_separators = {
-			left = wezterm.nerdfonts.pl_left_hard_divider,
-			right = wezterm.nerdfonts.pl_right_hard_divider,
-		},
-	},
-	sections = {
-		tabline_a = { "mode" },
-		tabline_b = { "workspace" },
-		tabline_c = { " " },
-		tab_active = {
-			"index",
-			{ "cwd", padding = { left = 0, right = 1 } },
-			{ "zoomed", padding = 0 },
-		},
-		tab_inactive = { "index", { "process", padding = { left = 0, right = 1 } } },
-		tabline_x = { "ram" },
-		tabline_y = { "" },
-		tabline_z = { "domain" },
-	},
-	extensions = { "resurrect", "smart_workspace_switcher" },
-})
+		extensions = { "resurrect", "smart_workspace_switcher" },
+	})
+	if not ok then
+		wezterm.log_warn("Failed to initialize tabline.wez: " .. tostring(err))
+	end
+end
 
-toggle_terminal.apply_to_config(config, {
-	key = ";",
-	mods = "CTRL|SHIFT",
-	direction = "Up",
-	size = { Percent = 20 },
-	change_invoker_id_everytime = false,
-	zoom = {
-		auto_zoom_toggle_terminal = false,
-		auto_zoom_invoker_pane = true,
-		remember_zoomed = true,
-	},
-})
+if toggle_terminal then
+	local ok, err = pcall(toggle_terminal.apply_to_config, config, {
+		key = ";",
+		mods = "CTRL|SHIFT",
+		direction = "Up",
+		size = { Percent = 20 },
+		change_invoker_id_everytime = false,
+		zoom = {
+			auto_zoom_toggle_terminal = false,
+			auto_zoom_invoker_pane = true,
+			remember_zoomed = true,
+		},
+	})
+	if not ok then
+		wezterm.log_warn("Failed to initialize toggle_terminal.wez: " .. tostring(err))
+	end
+end
 
 return config

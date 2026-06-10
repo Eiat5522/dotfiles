@@ -63,23 +63,24 @@ end
 -- ------------------------  SSH Server Configuration  -------------------------------  --
 
 -- -----------------------------  TLS Server  ----------------------------------------  --
-if have_tls_certs then
+--[[if have_tls_certs then
 	config.tls_servers = {
 		{
-			bind_address = "127.0.0.1:20808",
+			bind_address = "127.0.0.1:8080",
 			pem_private_key = tls_cert_dir .. "/server.key",
 			pem_cert = tls_cert_dir .. "/server.pem",
 			pem_ca = tls_cert_dir .. "/ca.pem",
 		},
-	}
+	}}
 else
 	-- bootstrap_via_ssh can provision certs dynamically, so only bind_address is needed here.
-	config.tls_servers = {
-		{
-			bind_address = "127.0.0.1:20808",
-		},
-	}
-end
+  ]]
+config.tls_servers = {
+	{
+		bind_address = "127.0.0.1:8080",
+	},
+}
+-- end
 -- --------------------    MUX Server Configuration  ---------------------------------  --
 config.default_mux_server_domain = "local"
 -- ------------------------- UI Settings ---------------------------------------------- --
