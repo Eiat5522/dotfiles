@@ -60,27 +60,63 @@ for _, dom in ipairs(config.ssh_domains) do
 		dom.ssh_option.port = "2222"
 	end
 end
--- ------------------------  SSH Server Configuration  -------------------------------  --
 
--- -----------------------------  TLS Server  ----------------------------------------  --
---[[if have_tls_certs then
-	config.tls_servers = {
-		{
-			bind_address = "127.0.0.1:8080",
-			pem_private_key = tls_cert_dir .. "/server.key",
-			pem_cert = tls_cert_dir .. "/server.pem",
-			pem_ca = tls_cert_dir .. "/ca.pem",
+	table.insert(config.ssh_domains, {
+		name = "SSH:wsl-ubuntu",
+		remote_address = "127.0.0.1:2222",
+		username = "eiat",
+		ssh_option = {
+			IdentityFile = "/home/eiat/.ssh/id_ed25519",
+			UserKnownHostsFile = "/home/eiat/.ssh/known_hosts",
+			IdentitiesOnly = "yes",
+			StrictHostKeyChecking = "no",
 		},
-	}}
-else
-	-- bootstrap_via_ssh can provision certs dynamically, so only bind_address is needed here.
-  ]]
-config.tls_servers = {
+		connect_automatically = false,
+	})
+
+	table.insert(config.ssh_domains, {
+		name = "SSHMUX:wsl-ubuntu",
+		remote_address = "127.0.0.1:2222",
+		username = "eiat",
+		multiplexing = "WezTerm",
+		ssh_option = {
+			IdentityFile = "/home/eiat/.ssh/id_ed25519",
+			UserKnownHostsFile = "/home/eiat/.ssh/known_hosts",
+			IdentitiesOnly = "yes",
+			StrictHostKeyChecking = "no",
+		},
+		connect_automatically = false,
+		default_prog = { "bash", "-l" },
+		timeout = 60,
+		remote_wezterm_path = "/home/eiat/.local/bin/wezterm",
+	})
+-- -------------------------  Unix Domain (local mux)  --------------------------------  --
+-- Provides local session persistence: sessions survive GUI restarts.
+-- Connect manually: wezterm connect unix
+--[[config.unix_domains = {
 	{
-		bind_address = "127.0.0.1:8080",
+		name = "unix",
+		-- No socket_path override; wezterm uses $XDG_RUNTIME_DIR/wezterm/sock by default.
 	},
 }
--- end
+--]]
+config.unix_domains = {
+	{
+		name = "wsl",
+		-- Use the native WSL socket path; WSL2 cannot bind AF_UNIX sockets
+		-- on the host NTFS volume.
+	},
+}
+--[[ --------------------  TLS Client (attach from Linux side)  ------------------------  --
+-- Allows LEADER+SHIFT+A to attach to the local TLS mux server.
+config.tls_clients = {
+	{
+		name = tls_domain_name, -- "local-tls"
+		remote_address = "127.0.0.1:8080",
+		bootstrap_via_ssh = "eiat@127.0.0.1:2222",
+		local_echo_threshold_ms = 10,
+	},
+--]]
 -- --------------------    MUX Server Configuration  ---------------------------------  --
 config.default_mux_server_domain = "local"
 -- ------------------------- UI Settings ---------------------------------------------- --

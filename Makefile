@@ -1,4 +1,4 @@
-.PHONY: help install install-wsl install-windows uninstall clean
+.PHONY: help install install-wsl install-windows install-wezterm-pinned uninstall clean
 
 help:
 	@echo "Dotfiles Management"
@@ -41,6 +41,7 @@ help:
 	@printf '%s\n' '  make install         - Full setup (WSL + Windows configs)'
 	@printf '%s\n' '  make install-wsl     - Install WSL configs only (using GNU Stow)'
 	@printf '%s\n' '  make install-windows - Install Windows-side configs'
+	@printf '%s\n' '  make install-wezterm-pinned - Install pinned WezTerm version and freeze Windows updates'
 	@printf '%s\n' '  make uninstall       - Remove all symlinks'
 	@printf '%s\n' '  make clean           - Clean up stow state'
 	@printf '%s\n' ''
@@ -62,6 +63,9 @@ install-windows:
 		exit 1; \
 	fi
 	@./install-windows-configs.sh
+
+install-wezterm-pinned:
+	@./install-wezterm-pinned.sh
 
 uninstall:
 	@printf '%s\n' 'Removing symlinks...'

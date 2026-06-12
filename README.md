@@ -91,9 +91,32 @@ make help              # Show all available commands
 make install           # Full setup (WSL + Windows)
 make install-wsl       # Install WSL configs only
 make install-windows   # Install Windows-side configs
+make install-wezterm-pinned  # Install pinned WezTerm version + freeze Windows updates
 make uninstall         # Remove all symlinks
 ./bootstrap.sh         # One-command automated setup
 ```
+
+## Pinning WezTerm Version (WSL + Windows)
+
+This repo tracks a pinned WezTerm version in:
+
+```bash
+wezterm/VERSION
+```
+
+Install and lock that version with:
+
+```bash
+make install-wezterm-pinned
+```
+
+What this does:
+
+- Installs the exact pinned Linux/WSL `wezterm-nightly` build into `~/.local/opt/wezterm-<version>`
+- Updates symlinks in `~/.local/bin` (`wezterm`, `wezterm-gui`, `wezterm-mux-server`)
+- On WSL, applies Windows-side freeze controls (best effort): `scoop hold wezterm` and `winget pin`
+
+To change versions, update `wezterm/VERSION` and re-run `make install-wezterm-pinned`.
 
 ## Requirements
 

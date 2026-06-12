@@ -84,33 +84,59 @@ config.wsl_domains = {
 
 config.ssh_domains = {
 	{
-		name = "my.ssh.server",
+		name = "SSH:wsl-ubuntu",
 		remote_address = "127.0.0.1:2222",
 		username = "eiat",
-		multiplexing = "WezTerm",
-		ssh_option = { identityfile = "C:/Users/name/.ssh/id_ed25519" },
+		ssh_option = {
+			IdentityFile = "C:/Users/Dev/.ssh/id_ed25519",
+			UserKnownHostsFile = "C:/Users/Dev/.ssh/known_hosts",
+			IdentitiesOnly = "yes",
+			StrictHostKeyChecking = "no",
+		},
 		connect_automatically = false,
-		default_prog = { "bash", "-l" },
-		timeout = 60,
-		remote_wezterm_path = "/usr/bin/wezterm",
 	},
-}
+		{
+			name = "SSHMUX:wsl-ubuntu",
+			remote_address = "127.0.0.1:2222",
+		username = "eiat",
+		multiplexing = "WezTerm",
+		ssh_option = {
+			IdentityFile = "C:/Users/Dev/.ssh/id_ed25519",
+			UserKnownHostsFile = "C:/Users/Dev/.ssh/known_hosts",
+			IdentitiesOnly = "yes",
+			StrictHostKeyChecking = "no",
+		},
+			connect_automatically = false,
+			default_prog = { "bash", "-l" },
+			timeout = 60,
+			remote_wezterm_path = "/home/eiat/.local/bin/wezterm",
+		},
+	}
 
 config.unix_domains = {
 	{
-		name = "unix",
+		name = "wsl",
 		skip_permissions_check = true,
-		socket_path = "C:\\Users\\Dev\\.local\\share\\wezterm\\unix-mux.sock",
+		-- Start wezterm-mux-server inside WSL2 when connecting.
+		-- The mux server uses the WSL-side socket path configured in
+		-- wezterm/.wezterm.lua (/mnt/c/Users/Dev/.local/share/wezterm/sock).
+		serve_command = {
+			"wsl.exe", "-d", "Ubuntu-24.04", "--",
+			"wezterm-mux-server", "--daemonize",
+		},
 		local_echo_threshold_ms = 10,
-		no_serve_automatically = false,
 	},
 }
+
+-- Use explicit startup args for mux attach; this is more reliable than
+-- relying on default-domain behavior for initial GUI startup.
+config.default_gui_startup_args = { "connect", "wsl" }
 
 config.tls_clients = {
 	{
 		name = "my.tls.server",
-		remote_address = "127.0.0.1:20808",
-		bootstrap_via_ssh = "eiat@wsl-ubuntu",
+		remote_address = "127.0.0.1:8080",
+		bootstrap_via_ssh = "eiat@wsl-ubuntu:2222",
 	},
 }
 
