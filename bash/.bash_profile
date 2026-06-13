@@ -73,7 +73,15 @@ path_prepend "$HOME/.bun/bin"
 path_prepend "$HOME/flutter/bin"
 path_prepend "/usr/.local/go/bin"
 path_append "$HOME/.config/nvim-linux-x86_64/bin"
-path_append "/mnt/c/Users/Dev/AppData/Roaming/Code/User/globalStorage/ms-vscode-remote.remote-containers/cli-bin"
+if command -v wslvar >/dev/null 2>&1; then
+  __windows_user_profile=$(wslvar USERPROFILE 2>/dev/null | sed 's#\\#/#g')
+elif command -v cmd.exe >/dev/null 2>&1; then
+  __windows_user_profile=$(cmd.exe /C "echo %USERPROFILE%" 2>/dev/null | tr -d '\r' | sed 's#\\#/#g; s#^C:#/mnt/c#')
+else
+  __windows_user_profile=
+fi
+[ -n "$__windows_user_profile" ] && path_append "$__windows_user_profile/AppData/Roaming/Code/User/globalStorage/ms-vscode-remote.remote-containers/cli-bin"
+unset __windows_user_profile
 path_append "$HOME/android-studio/bin"
 path_append "$HOME/.config/lazydocker_0.24.1_Linux_x86"
 path_append "$HOME/.maestro/bin"
@@ -87,7 +95,9 @@ path_append "$HOME/.nvm/versions/node/v22.22.2/bin/copilot"
 path_append "$HOME/.local/bin/hermes"
 path_append "$HOME/.opencode/bin/opencode"
 
-export DOCKER_HOST="unix:///run/user/1000/docker.sock"
+if [ -n "${XDG_RUNTIME_DIR:-}" ]; then
+  export DOCKER_HOST="unix://$XDG_RUNTIME_DIR/docker.sock"
+fi
 
 if [ -z "${XDG_DATA_HOME}" ]; then
   export PNPM_HOME="$HOME/.local/share/pnpm"
@@ -144,8 +154,5 @@ export PATH
 # shellcheck source=/dev/null
 [ -f "$HOME/.bashrc" ] && . "$HOME/.bashrc"
 
-
-# Added by Antigravity CLI installer
-export PATH="/home/eiat/.local/bin:$PATH"
 
 SF_AC_BASH_SETUP_PATH="$HOME/.cache/sf/autocomplete/bash_setup" && test -f "$SF_AC_BASH_SETUP_PATH" && source "$SF_AC_BASH_SETUP_PATH"; # sf autocomplete setup

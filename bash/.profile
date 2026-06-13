@@ -23,9 +23,9 @@ fi
 
 . "$HOME/.atuin/bin/env"
 
-[ -f "/home/eiat/.ghcup/env" ] && . "/home/eiat/.ghcup/env" # ghcup-env
+[ -f "$HOME/.ghcup/env" ] && . "$HOME/.ghcup/env" # ghcup-env
 # >>> spawn >>>
-export PATH="/home/eiat/.bun/bin:$PATH"
+export PATH="$HOME/.bun/bin:$PATH"
 # <<< spawn <<<
 
 # If bash reads ~/.profile directly, source ~/.bashrc only after login-time
@@ -35,7 +35,3 @@ if [ -n "$BASH_VERSION" ] && [ -z "${__BASH_PROFILE_SOURCED_PROFILE:-}" ]; then
 	. "$HOME/.bashrc"
     fi
 fi
-
-
-# Added by Antigravity CLI installer
-export PATH="/home/eiat/.local/bin:$PATH"

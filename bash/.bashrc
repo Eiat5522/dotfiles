@@ -433,7 +433,9 @@ unset __bashrc_codex_bin
 # shellcheck source=/dev/null
 [[ -f "$HOME/.config/broot/launcher/bash/br" ]] && source "$HOME/.config/broot/launcher/bash/br"
 
-eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv bash)"
+if [ -x /home/linuxbrew/.linuxbrew/bin/brew ]; then
+  eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv bash)"
+fi
 
 # shellcheck source=/dev/null
 . ~/.bash.d/cht.sh
@@ -443,4 +445,4 @@ fastfetch
 [[ -r "$HOME/.bash_completion/alacritty" ]] && source "$HOME/.bash_completion/alacritty"
 
 # shellcheck source=/dev/null
-source ~/BASH_ENV
+[ -f "$HOME/BASH_ENV" ] && source "$HOME/BASH_ENV"
