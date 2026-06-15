@@ -1,7 +1,6 @@
 local wezterm = require("wezterm")
 local act = wezterm.action
 local config = wezterm.config_builder()
-local is_wsl = wezterm.running_under_wsl()
 local local_domain = { DomainName = "local" }
 local tls_domain_name = "local-tls"
 local tls_cert_dir = wezterm.home_dir .. "/.local/share/wezterm/tls"
@@ -44,14 +43,15 @@ local function open_cht_sh(window, pane, line)
 	)
 end
 -- ----------------------- My Configuration Starts Here  ------------------------------ --
-config.default_domain = "local"
+--config.default_domain = "local"
 -- Keep the TLS mux domain available for manual attach, but don't auto-connect
 -- it during GUI startup.
 -- ------------------------------------------------------------------------------------ --
 config.default_prog = { "bash", "-l" }
 -- -------------------- ---- MULTIPLEXER SERVER DOMAINS  ------------------------------ --
+config.default_mux_server_domain = "local"
 -- ------------------------- SSH Domains Configuration  ------------------------------- --
-config.ssh_domains = wezterm.default_ssh_domains()
+--[[config.ssh_domains = wezterm.default_ssh_domains()
 for _, dom in ipairs(config.ssh_domains) do
 	dom.assume_shell = "Posix"
 	if type(dom.remote_address) == "string" and dom.remote_address:match(":22$") then
@@ -61,70 +61,103 @@ for _, dom in ipairs(config.ssh_domains) do
 	end
 end
 
-	table.insert(config.ssh_domains, {
-		name = "SSH:wsl-ubuntu",
-		remote_address = "127.0.0.1:2222",
-		username = "eiat",
-		ssh_option = {
-			IdentityFile = "/home/eiat/.ssh/id_ed25519",
-			UserKnownHostsFile = "/home/eiat/.ssh/known_hosts",
-			IdentitiesOnly = "yes",
-			StrictHostKeyChecking = "no",
-		},
-		connect_automatically = false,
-	})
+table.insert(config.ssh_domains, {
+	name = "SSH:wsl-ubuntu",
+	remote_address = "127.0.0.1:2222",
+	username = "eiat",
+	multiplexing = "None",
+	assume_shell = "Posix",
+	ssh_option = {
+		IdentityFile = "/home/eiat/.ssh/id_ed25519",
+		UserKnownHostsFile = "/home/eiat/.ssh/known_hosts",
+		IdentitiesOnly = "yes",
+		StrictHostKeyChecking = "no",
+	},
+	connect_automatically = false,
+	default_prog = { "bash", "-l" },
+	timeout = 60,
+	remote_wezterm_path = "/home/eiat/.local/bin/wezterm",
+})
 
-	table.insert(config.ssh_domains, {
-		name = "SSHMUX:wsl-ubuntu",
-		remote_address = "127.0.0.1:2222",
-		username = "eiat",
+table.insert(config.ssh_domains, {
+	name = "SSHMUX:wsl-ubuntu",
+	remote_address = "127.0.0.1:2222",
+	username = "eiat",
+	multiplexing = "WezTerm",
+	assume_shell = "Posix",
+	ssh_option = {
+		IdentityFile = "/home/eiat/.ssh/id_ed25519",
+		UserKnownHostsFile = "/home/eiat/.ssh/known_hosts",
+		IdentitiesOnly = "yes",
+		StrictHostKeyChecking = "no",
+	},
+	connect_automatically = false,
+	default_prog = { "bash", "-l" },
+	timeout = 60,
+	remote_wezterm_path = "/home/eiat/.local/bin/wezterm",
+})
+--]]
+
+--[[local ssh_domains = {}
+
+for host, host_config in pairs(wezterm.enumerate_ssh_hosts()) do
+	table.insert(ssh_domains, {
+		name = host,
+		remote_address = host,
 		multiplexing = "WezTerm",
-		ssh_option = {
-			IdentityFile = "/home/eiat/.ssh/id_ed25519",
-			UserKnownHostsFile = "/home/eiat/.ssh/known_hosts",
-			IdentitiesOnly = "yes",
-			StrictHostKeyChecking = "no",
-		},
-		connect_automatically = false,
-		default_prog = { "bash", "-l" },
-		timeout = 60,
-		remote_wezterm_path = "/home/eiat/.local/bin/wezterm",
+		assume_shell = "Posix",
 	})
+end
+--]]
 -- -------------------------  Unix Domain (local mux)  --------------------------------  --
 -- Provides local session persistence: sessions survive GUI restarts.
 -- Connect manually: wezterm connect unix
---[[config.unix_domains = {
+config.unix_domains = {
 	{
 		name = "unix",
 		-- No socket_path override; wezterm uses $XDG_RUNTIME_DIR/wezterm/sock by default.
 	},
 }
---]]
-config.unix_domains = {
-	{
-		name = "wsl",
-		-- Use the native WSL socket path; WSL2 cannot bind AF_UNIX sockets
-		-- on the host NTFS volume.
-	},
-}
---[[ --------------------  TLS Client (attach from Linux side)  ------------------------  --
--- Allows LEADER+SHIFT+A to attach to the local TLS mux server.
-config.tls_clients = {
-	{
-		name = tls_domain_name, -- "local-tls"
-		remote_address = "127.0.0.1:8080",
-		bootstrap_via_ssh = "eiat@127.0.0.1:2222",
-		local_echo_threshold_ms = 10,
-	},
---]]
--- --------------------    MUX Server Configuration  ---------------------------------  --
-config.default_mux_server_domain = "local"
+
+if have_tls_certs then
+	config.tls_servers = {
+		{
+			-- The address:port combination on which the server will listen
+			-- for client connections
+			bind_address = "127.0.0.1:8080",
+
+			-- the path to an x509 PEM encoded private key file.
+			-- You can omit this if your tls_client is using bootstrap_via_ssh.
+			pem_private_key = tls_cert_dir .. "/server.key",
+
+			-- the path to an x509 PEM encoded certificate file.
+			-- You can omit this if your tls_client is using bootstrap_via_ssh.
+			pem_cert = tls_cert_dir .. "/server.pem",
+
+			--/run/user/1000/wezterm/pki/ca.pem
+			--/run/user/1000/wezterm/pki/server.pem
+
+			-- the path to an x509 PEM encoded CA chain file.
+			-- You can omit this if your tls_client is using bootstrap_via_ssh.
+			pem_ca = tls_cert_dir .. "/ca.pem",
+
+			-- A set of paths to load additional CA certificates.
+			-- Each entry can be either the path to a directory
+			-- or to a PEM encoded CA file.  If an entry is a directory,
+			-- then its contents will be loaded as CA certs and added
+			-- to the trust store.
+			-- You can omit this if your tls_client is using bootstrap_via_ssh.
+			-- pem_root_certs = { "/some/path/ca1.pem", "/some/path/ca2.pem" },
+		},
+	}
+end
+
 -- ------------------------- UI Settings ---------------------------------------------- --
 config.color_scheme = "tokyonight"
 config.window_background_opacity = 0.98
 config.font_size = 14
 config.window_padding = { left = 0, right = 0, top = 0, bottom = 0 }
-config.allow_win32_input_mode = false
+config.allow_win32_input_mode = true
 -- ------------------------  TAB BAR CONFIGURATION  ----------------------------------- --
 config.enable_tab_bar = true
 config.use_fancy_tab_bar = true
@@ -242,5 +275,6 @@ local keys = {
 
 config.mouse_bindings = mouse_bindings
 config.keys = keys
+config.ssh_domains = ssh_domains
 
 return config

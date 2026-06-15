@@ -528,19 +528,45 @@ return {
   -- Setup LSP for fzf-lua
   {
     "neovim/nvim-lspconfig",
-    init = function()
-      local keys = require("lazyvim.plugins.lsp.keymaps").get()
+    opts = function(_, opts)
+      opts.servers = opts.servers or {}
+      opts.servers["*"] = opts.servers["*"] or {}
+      opts.servers["*"].keys = opts.servers["*"].keys or {}
       -- change keymap to use FzfLua
-      keys[#keys + 1] = {
-        "gr",
-        "<cmd> FzfLua lsp_references jump1=true ignore_current_line=true async=true<CR>",
-        desc = "Go to references",
-      }
-      keys[#keys + 1] = { "gd", "<cmd> FzfLua lsp_definitions async=true<CR>", desc = "Go to definition" }
-      keys[#keys + 1] = { "gD", "<cmd> FzfLua lsp_declarations async=true<CR>", desc = "Go to declaration" }
-      keys[#keys + 1] = { "gI", "<cmd> FzfLua lsp_implementations async=true<CR>", desc = "Go to implementation" }
-      keys[#keys + 1] = { "gT", "<cmd> FzfLua lsp_typedefs async=true<CR>", desc = "Go to type definition" }
-      keys[#keys + 1] = { "gF", "<cmd> FzfLua lsp_finder async=true<CR>", desc = "LSP Finder" }
+      vim.list_extend(opts.servers["*"].keys, {
+        {
+          "gr",
+          "<cmd> FzfLua lsp_references jump1=true ignore_current_line=true async=true<CR>",
+          desc = "Go to references",
+          has = "references",
+        },
+        {
+          "gd",
+          "<cmd> FzfLua lsp_definitions async=true<CR>",
+          desc = "Go to definition",
+          has = "definition",
+        },
+        {
+          "gD",
+          "<cmd> FzfLua lsp_declarations async=true<CR>",
+          desc = "Go to declaration",
+          has = "declaration",
+        },
+        {
+          "gI",
+          "<cmd> FzfLua lsp_implementations async=true<CR>",
+          desc = "Go to implementation",
+          has = "implementation",
+        },
+        {
+          "gT",
+          "<cmd> FzfLua lsp_typedefs async=true<CR>",
+          desc = "Go to type definition",
+          has = "typeDefinition",
+        },
+        { "gF", "<cmd> FzfLua lsp_finder async=true<CR>", desc = "LSP Finder" },
+      })
+      return opts
     end,
   },
   {

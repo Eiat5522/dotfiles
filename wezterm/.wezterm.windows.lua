@@ -1,6 +1,15 @@
 local wezterm = require("wezterm")
 local mux = wezterm.mux
 local act = wezterm.action
+local wsl_domains = wezterm.default_wsl_domains()
+for _, dom in ipairs(wsl_domains) do
+	if dom.distribution == "Ubuntu-24.04" then
+		dom.username = "eiat"
+		dom.default_cwd = "/home/eiat/"
+		dom.default_prog = { "bash", "-l" }
+	end
+end
+local ssh_domains = wezterm.default_ssh_domains
 
 local function load_remote_plugin(url, name)
 	local ok, plugin = pcall(wezterm.plugin.require, url)
@@ -28,15 +37,36 @@ local function load_local_plugin(name)
 	return plugin
 end
 
-local ai_helper = load_local_plugin("ai-helper.wezterm")
 local agent_deck = load_local_plugin("wezterm-agent-deck")
 local wezterm_sync = load_local_plugin("wezterm-sync")
 
 local config = wezterm.config_builder()
 
-config.default_domain = "Ubuntu-24.04"
-config.default_prog = { "wsl.exe", "-d", "Ubuntu-24.04", "--cd", "~", "--exec", "bash", "-l" }
+config.default_prog = { "wsl.exe", "-d", "Ubuntu-24.04", "--cd", "~", "bash", "-l" }
 
+local function open_cht_sh(window, pane, line)
+	if not line then
+		return
+	end
+
+	local query = line:match("^%s*(.-)%s*$")
+	local command = "cht.sh --shell=bash --mode=auto"
+	if query ~= "" then
+		command = command .. " " .. string.format("%q", query)
+	end
+
+	window:perform_action(
+		act.SpawnCommandInNewWindow({
+			label = query ~= "" and ("cht.sh: " .. query) or "cht.sh",
+			args = { "bash", "-l", "-c", command },
+			domain = "local",
+			position = { x = 100, y = 50 },
+		}),
+		pane
+	)
+end
+
+-- Custom Launcher Menu
 config.launch_menu = {
 	{
 		label = "Pwsh",
@@ -59,11 +89,7 @@ config.launch_menu = {
 	},
 	{
 		label = "WSL: Ubuntu-24.04",
-		args = { "wsl.exe", "-d", "Ubuntu-24.04", "--cd", "~", "--exec", "bash", "-l" },
-	},
-	{
-		label = "Open Yazi",
-		args = { "wsl.exe", "-d", "Ubuntu-24.04", "--cd", "~", "--exec", "bash", "-lc", "yazi" },
+		args = { "wsl.exe", "-d", "Ubuntu-24.04", "--cd", "~", "bash", "-l" },
 	},
 }
 
@@ -72,82 +98,68 @@ wezterm.on("gui-startup", function(cmd)
 	window:gui_window():maximize()
 end)
 
-config.wsl_domains = {
-	{
-		name = "Ubuntu-24.04",
-		distribution = "Ubuntu-24.04",
-		username = "eiat",
-		default_cwd = "/home/eiat/",
-		default_prog = { "bash", "-l" },
-	},
-}
-
-config.ssh_domains = {
-	{
-		name = "SSH:wsl-ubuntu",
-		remote_address = "127.0.0.1:2222",
-		username = "eiat",
-		ssh_option = {
-			IdentityFile = "C:/Users/Dev/.ssh/id_ed25519",
-			UserKnownHostsFile = "C:/Users/Dev/.ssh/known_hosts",
-			IdentitiesOnly = "yes",
-			StrictHostKeyChecking = "no",
-		},
-		connect_automatically = false,
-	},
-		{
-			name = "SSHMUX:wsl-ubuntu",
-			remote_address = "127.0.0.1:2222",
-		username = "eiat",
-		multiplexing = "WezTerm",
-		ssh_option = {
-			IdentityFile = "C:/Users/Dev/.ssh/id_ed25519",
-			UserKnownHostsFile = "C:/Users/Dev/.ssh/known_hosts",
-			IdentitiesOnly = "yes",
-			StrictHostKeyChecking = "no",
-		},
-			connect_automatically = false,
-			default_prog = { "bash", "-l" },
-			timeout = 60,
-			remote_wezterm_path = "/home/eiat/.local/bin/wezterm",
-		},
-	}
-
 config.unix_domains = {
 	{
-		name = "wsl",
-		skip_permissions_check = true,
-		-- Start wezterm-mux-server inside WSL2 when connecting.
-		-- The mux server uses the WSL-side socket path configured in
-		-- wezterm/.wezterm.lua (/mnt/c/Users/Dev/.local/share/wezterm/sock).
-		serve_command = {
-			"wsl.exe", "-d", "Ubuntu-24.04", "--",
-			"wezterm-mux-server", "--daemonize",
-		},
+		name = "unix",
 		local_echo_threshold_ms = 10,
 	},
 }
 
--- Use explicit startup args for mux attach; this is more reliable than
--- relying on default-domain behavior for initial GUI startup.
-config.default_gui_startup_args = { "connect", "wsl" }
+ssh_domains = wezterm.default_ssh_domains()
+
+for host, _ in pairs(wezterm.enumerate_ssh_hosts()) do
+	table.insert(ssh_domains, {
+		-- the name can be anything you want; we're just using the hostname
+		name = host,
+		-- remote_address must be set to `host` for the ssh config to apply to it
+		remote_address = host,
+
+		-- if you don't have wezterm's mux server installed on the remote
+		-- host, you may wish to set multiplexing = "None" to use a direct
+		-- ssh connection that supports multiple panes/tabs which will close
+		-- when the connection is dropped.
+
+		multiplexing = "None",
+
+		-- if you know that the remote host has a posix/unix environment,
+		-- setting assume_shell = "Posix" will result in new panes respecting
+		-- the remote current directory when multiplexing = "None".
+		assume_shell = "Posix",
+	})
+end
 
 config.tls_clients = {
 	{
 		name = "my.tls.server",
 		remote_address = "127.0.0.1:8080",
-		bootstrap_via_ssh = "eiat@wsl-ubuntu:2222",
+		bootstrap_via_ssh = "eiat@127.0.0.1:2222",
+		-- explicitly control whether the client checks that the certificate
+		-- presented by the server matches the hostname portion of
+		-- `remote_address`.  The default is true.  This option is made
+		-- available for troubleshooting purposes and should not be used outside
+		-- of a controlled environment as it weakens the security of the TLS
+		-- channel.
+		accept_invalid_hostnames = false,
+		-- Specify an alternate read timeout
+		read_timeout = 60,
+		-- The path to the wezterm binary on the remote host
+		remote_wezterm_path = "/usr/bin/wezterm",
 	},
 }
-
+-- When set to true (the default), wezterm will configure the
+-- SSH_AUTH_SOCK environment variable for panes spawned in the local domain
+config.mux_enable_ssh_agent = true
+-- Performance Tuning
+config.front_end = "WebGpu"
+-- Custom Config
 config.color_scheme = "tokyonight"
 config.window_background_opacity = 0.98
 config.font_size = 13
 config.window_padding = { left = 0, right = 0, top = 0, bottom = 0 }
-config.allow_win32_input_mode = false
+config.allow_win32_input_mode = true
 
 config.enable_tab_bar = true
-config.use_fancy_tab_bar = true
+config.use_fancy_tab_bar = false
 config.hide_tab_bar_if_only_one_tab = false
 config.tab_bar_at_bottom = true
 
@@ -180,7 +192,7 @@ config.mouse_bindings = {
 	},
 }
 
-config.leader = { key = "a", mods = "CTRL", timeout_milliseconds = 2000 }
+config.leader = { key = "a", mods = "CTRL", timeout_milliseconds = 3000 }
 
 config.keys = {
 	{ key = "/", mods = "CTRL|ALT", action = act.SplitHorizontal({ domain = "CurrentPaneDomain" }) },
@@ -213,16 +225,28 @@ config.keys = {
 
 	{ key = "a", mods = "LEADER|CTRL", action = act.SendKey({ key = "a", mods = "CTRL" }) },
 	{ key = "d", mods = "CTRL|SHIFT", action = act.DetachDomain("CurrentPaneDomain") },
+	{ key = "s", mods = "CTRL|SHIFT", action = act.AttachDomain("CurrentPaneDomain") },
 
 	{
 		key = "Y",
 		mods = "CTRL|SHIFT",
 		action = act.SpawnCommandInNewWindow({
 			label = "Open Navi",
-			args = { "bash", "-l", "navi" },
+			args = { "navi" },
 			cwd = "/home/eiat",
 			domain = "CurrentPaneDomain",
-			position = { x = 300, y = 300 },
+			position = { x = 300, y = 500 },
+		}),
+	},
+
+	{
+		key = "c",
+		mods = "LEADER|SHIFT",
+		action = act.SpawnCommandInNewWindow({
+			label = "Open Wezterm Config",
+			args = { "bash", "-c", '$EDITOR "/mnt/c/Users/Dev/.wezterm.lua"' },
+			domain = "CurrentPaneDomain",
+			position = { x = 300, y = 500 },
 		}),
 	},
 	{
@@ -238,9 +262,19 @@ config.keys = {
 			end),
 		}),
 	},
+	{
+		key = "H",
+		mods = "CTRL|SHIFT",
+		action = act.PromptInputLine({
+			description = "Enter package or library for cht.sh",
+			action = wezterm.action_callback(function(window, pane, line)
+				open_cht_sh(window, pane, line)
+			end),
+		}),
+	},
 }
 
-local google_api_key = os.getenv("GOOGLE_AI_API_KEY")
+--[[local google_api_key = os.getenv("GOOGLE_AI_API_KEY")
 if ai_helper and google_api_key and google_api_key ~= "" then
 	ai_helper.apply_to_config(config, {
 		type = "google",
@@ -258,7 +292,7 @@ if ai_helper and google_api_key and google_api_key ~= "" then
 elseif ai_helper then
 	wezterm.log_warn("ai-helper.wezterm loaded, but GOOGLE_AI_API_KEY is not set; skipping ai-helper keybindings")
 end
-
+--]]
 if agent_deck then
 	agent_deck.apply_to_config(config, {
 		update_interval = 1000,
@@ -332,5 +366,7 @@ if toggle_terminal then
 		wezterm.log_warn("Failed to initialize toggle_terminal.wez: " .. tostring(err))
 	end
 end
+
+config.wsl_domains = wsl_domains
 
 return config

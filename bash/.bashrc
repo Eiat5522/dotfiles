@@ -440,9 +440,9 @@ fi
 # shellcheck source=/dev/null
 . ~/.bash.d/cht.sh
 
-nvm use default
-fastfetch
-[[ -r "$HOME/.bash_completion/alacritty" ]] && source "$HOME/.bash_completion/alacritty"
+if [[ $- == *i* ]]; then
+  fastfetch
+fi
 
 # shellcheck source=/dev/null
-[ -f "$HOME/BASH_ENV" ] && source "$HOME/BASH_ENV"
+[[ -r "$HOME/.bash_completion/alacritty" ]] && source "$HOME/.bash_completion/alacritty"
