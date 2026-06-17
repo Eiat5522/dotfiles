@@ -2,14 +2,6 @@ local wezterm = require("wezterm")
 local mux = wezterm.mux
 local act = wezterm.action
 local wsl_domains = wezterm.default_wsl_domains()
-for _, dom in ipairs(wsl_domains) do
-	if dom.distribution == "Ubuntu-24.04" then
-		dom.username = "eiat"
-		dom.default_cwd = "/home/eiat/"
-		dom.default_prog = { "bash", "-l" }
-	end
-end
-local ssh_domains = wezterm.default_ssh_domains
 
 local function load_remote_plugin(url, name)
 	local ok, plugin = pcall(wezterm.plugin.require, url)
@@ -39,10 +31,14 @@ end
 
 local agent_deck = load_local_plugin("wezterm-agent-deck")
 local wezterm_sync = load_local_plugin("wezterm-sync")
-
-local config = wezterm.config_builder()
+-- Allow working with both the current release and the nightly
+local config = {}
+if wezterm.config_builder then
+	config = wezterm.config_builder()
+end
 
 config.default_prog = { "wsl.exe", "-d", "Ubuntu-24.04", "--cd", "~", "bash", "-l" }
+config.default_domain = 'WSL:Ubuntu-24.04'
 
 local function open_cht_sh(window, pane, line)
 	if not line then
@@ -98,6 +94,16 @@ wezterm.on("gui-startup", function(cmd)
 	window:gui_window():maximize()
 end)
 
+-- set default wsl_domains
+for idx, dom in ipairs(wsl_domains) do
+	if dom.distribution == "Ubuntu-24.04" then
+		dom.username = "eiat"
+		dom.default_cwd = "/home/eiat/"
+		dom.default_prog = { "bash" }
+	end
+end
+
+-- set unix_domains
 config.unix_domains = {
 	{
 		name = "unix",
@@ -105,45 +111,56 @@ config.unix_domains = {
 	},
 }
 
-ssh_domains = wezterm.default_ssh_domains()
+local ssh_domains = {}
 
-for host, _ in pairs(wezterm.enumerate_ssh_hosts()) do
+for host in pairs(wezterm.enumerate_ssh_hosts()) do
 	table.insert(ssh_domains, {
 		-- the name can be anything you want; we're just using the hostname
 		name = host,
 		-- remote_address must be set to `host` for the ssh config to apply to it
 		remote_address = host,
-
 		-- if you don't have wezterm's mux server installed on the remote
 		-- host, you may wish to set multiplexing = "None" to use a direct
 		-- ssh connection that supports multiple panes/tabs which will close
 		-- when the connection is dropped.
-
-		multiplexing = "None",
-
+		multiplexing = "WezTerm",
 		-- if you know that the remote host has a posix/unix environment,
 		-- setting assume_shell = "Posix" will result in new panes respecting
 		-- the remote current directory when multiplexing = "None".
 		assume_shell = "Posix",
+		-- Whether agent auth should be disabled.
+		-- Set to true to disable it.
+		no_agent_auth = false,
+		-- Specify an alternative read timeout
+		timeout = 60,
+		-- The path to the wezterm binary on the remote host
+		remote_wezterm_path = "/home/eiat/.local/opt/wezterm-20260610-150805-891bed31/usr/bin/wezterm",
 	})
 end
 
 config.tls_clients = {
 	{
-		name = "my.tls.server",
-		remote_address = "127.0.0.1:8080",
+		-- The name of this specific domain.  Must be unique amongst
+		-- all types of domain in the configuration file.
+		name = "server.name",
+		-- If set, use ssh to connect, start the server, and obtain
+		-- a certificate.
+		-- The value is "user@host:port", just like "wezterm ssh" accepts.
 		bootstrap_via_ssh = "eiat@127.0.0.1:2222",
-		-- explicitly control whether the client checks that the certificate
-		-- presented by the server matches the hostname portion of
-		-- `remote_address`.  The default is true.  This option is made
-		-- available for troubleshooting purposes and should not be used outside
-		-- of a controlled environment as it weakens the security of the TLS
-		-- channel.
+		-- identifies the host:port pair of the remote server.
+		remote_address = "wsl-ubuntu:8080",
 		accept_invalid_hostnames = false,
 		-- Specify an alternate read timeout
+		-- If true, connect to this domain automatically at startup
+		connect_automatically = false,
+		-- Specify an alternate read timeout
 		read_timeout = 60,
+		-- Specify an alternate write timeout
+		write_timeout = 60,
 		-- The path to the wezterm binary on the remote host
-		remote_wezterm_path = "/usr/bin/wezterm",
+		remote_wezterm_path = "/home/eiat/.local/opt/wezterm-20260610-150805-891bed31/usr/bin/wezterm",
+		-- Specify the round-trip latency threshold for enabling predictive local echo
+		local_echo_threshold_ms = 10,
 	},
 }
 -- When set to true (the default), wezterm will configure the
@@ -159,7 +176,7 @@ config.window_padding = { left = 0, right = 0, top = 0, bottom = 0 }
 config.allow_win32_input_mode = true
 
 config.enable_tab_bar = true
-config.use_fancy_tab_bar = false
+config.use_fancy_tab_bar = true
 config.hide_tab_bar_if_only_one_tab = false
 config.tab_bar_at_bottom = true
 
@@ -240,11 +257,21 @@ config.keys = {
 	},
 
 	{
-		key = "c",
+		key = "C",
 		mods = "LEADER|SHIFT",
 		action = act.SpawnCommandInNewWindow({
 			label = "Open Wezterm Config",
 			args = { "bash", "-c", '$EDITOR "/mnt/c/Users/Dev/.wezterm.lua"' },
+			domain = "CurrentPaneDomain",
+			position = { x = 300, y = 500 },
+		}),
+	},
+	{
+		key = "B",
+		mods = "LEADER|SHIFT",
+		action = act.SpawnCommandInNewWindow({
+			label = "Open btop",
+			args = { "bash", "-c", "$EDITOR '/mnt/c/Users/Dev/.wezterm.lua'" },
 			domain = "CurrentPaneDomain",
 			position = { x = 300, y = 500 },
 		}),
@@ -274,25 +301,6 @@ config.keys = {
 	},
 }
 
---[[local google_api_key = os.getenv("GOOGLE_AI_API_KEY")
-if ai_helper and google_api_key and google_api_key ~= "" then
-	ai_helper.apply_to_config(config, {
-		type = "google",
-		api_key = google_api_key,
-		luarocks_path = "C:/Users/Dev/.local/bin/luarocks",
-		keybinding = { key = "i", mods = "CTRL|SHIFT" },
-		keybinding_with_pane = { key = "i", mods = "CTRL|SHIFT|ALT" },
-		system_prompt = "you are an assistant that specializes in CLI and unix commands. "
-			.. "you will be brief and to the point, if asked for commands print them in a way that's easy to copy, "
-			.. "otherwise just answer the question. concatenate commands with && or || for ease of use. ",
-		timeout = 30,
-		show_loading = true,
-		share_n_lines = 150,
-	})
-elseif ai_helper then
-	wezterm.log_warn("ai-helper.wezterm loaded, but GOOGLE_AI_API_KEY is not set; skipping ai-helper keybindings")
-end
---]]
 if agent_deck then
 	agent_deck.apply_to_config(config, {
 		update_interval = 1000,
@@ -366,6 +374,25 @@ if toggle_terminal then
 		wezterm.log_warn("Failed to initialize toggle_terminal.wez: " .. tostring(err))
 	end
 end
+
+-- Register your event listener directly on the 'wezterm' module
+wezterm.on("update-status", function(window, pane)
+	local meta = pane:get_metadata() or {}
+	local overrides = window:get_config_overrides() or {}
+	-- Display mux latency in the right status area
+	if meta.is_tardy then
+		local secs = meta.since_last_response_ms / 1000.0
+		window:set_right_status(string.format("tardy: %5.1fs⏳", secs))
+	else
+		--  change the color scheme to exaggerate when a password is being input
+		if meta.password_input then
+			overrides.color_scheme = "Red Alert"
+		else
+			overrides.color_scheme = nil
+		end
+		window:set_config_overrides(overrides)
+	end
+end)
 
 config.wsl_domains = wsl_domains
 
