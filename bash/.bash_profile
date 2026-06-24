@@ -126,8 +126,9 @@ export FZF_DEFAULT_OPTS=" --height 50% --layout=default --border --color=hl:#2dd
 
 export CCLSP_CONFIG_PATH="$HOME/.config/claude/cclsp.json"
 export EDITOR="lazy"
-export CODEX_HOME="$HOME/.codex"
-export CODEX_CLI_PATH="$HOME/.nvm/versions/node/v22.22.2/bin/codex"
+export HERMES_REDACT_SECRETS=false
+# export CODEX_HOME="$HOME/.codex"
+# export CODEX_CLI_PATH="$HOME/.nvm/versions/node/v22.22.2/bin/codex"
 export BROWSER="$HOME/.local/bin/wsl-browser"
 
 # Load machine-local secrets outside the dotfiles repository.
@@ -154,5 +155,4 @@ export PATH
 # shellcheck source=/dev/null
 [ -f "$HOME/.bashrc" ] && . "$HOME/.bashrc"
 
-
-SF_AC_BASH_SETUP_PATH="$HOME/.cache/sf/autocomplete/bash_setup" && test -f "$SF_AC_BASH_SETUP_PATH" && source "$SF_AC_BASH_SETUP_PATH"; # sf autocomplete setup
+SF_AC_BASH_SETUP_PATH="$HOME/.cache/sf/autocomplete/bash_setup" && test -f "$SF_AC_BASH_SETUP_PATH" && source "$SF_AC_BASH_SETUP_PATH" # sf autocomplete setup
