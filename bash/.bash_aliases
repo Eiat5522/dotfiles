@@ -20,6 +20,10 @@ alias aptud='sudo apt update'
 alias aptug='sudo apt upgrade'
 alias aptudug='sudo apt update && apt upgrade'
 
+alias snip='snip --theme tokyo-night'
+alias sp='snip --theme tokyo-night'
+alias fnip='snip --list | fzf | xargs snip'
+
 # enable color support of ls and also add handy aliases
 if [ -x /usr/bin/dircolors ]; then
   if test -r ~/.dircolors; then

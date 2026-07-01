@@ -1,16 +1,8 @@
-# Dotfiles Management with GNU Stow
+# Dotfiles
 
-This repository manages dotfiles for Linux/WSL2 environments with special support for WSL2 + Windows hybrid configurations.
-
-## Quick Start
-
-### One-Command Installation (Recommended)
-
-This repository manages dotfiles for Linux and WSL environments, with support for Windows-side config files.
+GNU Stow-managed dotfiles for Linux and WSL. Root install commands operate on the packages listed in `Makefile`; nested vendored projects keep their own tooling.
 
 ## Quick Start
-
-### One-Command Installation
 
 ```bash
 git clone https://github.com/Eiat5522/dotfiles ~/.dotfiles
@@ -18,146 +10,47 @@ cd ~/.dotfiles
 ./bootstrap.sh
 ```
 
-This will automatically:
+`bootstrap.sh` checks for `make` and GNU Stow, then delegates to `make install`.
 
-- Detect your environment (WSL2 or Linux)
-- Install WSL/Linux configurations using GNU Stow
-- Install Windows-side configs (if running in WSL2)
-
-### Manual Installation
-
-# If you prefer more control
-
-This will:
-
-- Detect whether you are on WSL
-- Install WSL/Linux configurations using GNU Stow
-- Copy Windows-side configs when running under WSL
-
-### Manual Installation
+## Install Commands
 
 ```bash
-# Install WSL/Linux configs only
-make install-wsl
-
-# Install Windows configs (WSL2 only)
-make install-windows
-
-# Or install everything
-make install
+make install          # Restow Unix/WSL packages; also run Windows copy step in WSL
+make install-wsl      # Restow Unix/WSL packages only
+make install-windows  # Copy Windows-side configs from WSL into the Windows home
+make uninstall        # Remove stowed Unix/WSL links
 ```
 
-## Managing Files on Both WSL2 and Windows
-
-For tools that need configuration files on the Windows side (like WezTerm):
-
-1. **Store the Windows version** in your dotfiles with a `.windows.*` suffix
-   - Example: `wezterm/.wezterm.windows.lua`
-
-2. **Prevent stowing** by adding to `.stow-local-ignore`:
-   - Per-package: Add to `package/.stow-local-ignore`
-   - Global: Add to root `.stow-local-ignore` with pattern `\package/.windows.*`
-
-3. **Install automatically** using `install-windows-configs.sh`:
-   - The script auto-detects your Windows username
-   - Copies config files from dotfiles to your Windows home directory
-   - This is not a live sync: re-run after updates to refresh Windows-side configs
-
-4. **Extend for new tools**:
-   - Add your `.windows.*` file to the appropriate package directory
-   - Update `install-windows-configs.sh` to install the new file
-   - Add ignore pattern to `.stow-local-ignore`
-
-### Example: Adding a New Windows Config
+To restow one package manually:
 
 ```bash
-# 1. Create your Windows-specific config
-echo "config content" > myapp/.myapp.windows.conf
-
-# 2. Add to package's .stow-local-ignore
-echo "*.windows.*" >> myapp/.stow-local-ignore
-
-# 3. Update install-windows-configs.sh to install it
-# (Edit the script to add your copy command)
-
-# 4. Run the installation
-./install-windows-configs.sh
+stow --dir "$PWD" --target "$HOME" --restow <package>
 ```
 
-## Available Commands
+## Windows-Side Configs
 
-```bash
-make help              # Show all available commands
-make install           # Full setup (WSL + Windows)
-make install-wsl       # Install WSL configs only
-make install-windows   # Install Windows-side configs
-make install-wezterm-pinned  # Install pinned WezTerm version + freeze Windows updates
-make uninstall         # Remove all symlinks
-./bootstrap.sh         # One-command automated setup
-```
+Windows-only files should use a `.windows.*` or `.win.*` name so root `.stow-local-ignore` keeps them out of `$HOME`.
 
-## Pinning WezTerm Version (WSL + Windows)
+`install-windows-configs.sh` is intentionally narrow:
 
-This repo tracks a pinned WezTerm version in:
+- It runs only from WSL.
+- It detects the Windows profile path through `cmd.exe`.
+- It targets `$WINDOWS_USER` under `/mnt/c/Users` when that variable is set, otherwise the detected Windows profile path.
+- It refuses to copy a symlinked source file.
+- It currently copies `wezterm/.wezterm.windows.lua` to the Windows home as `.wezterm.lua` when that source exists.
 
-```bash
-wezterm/VERSION
-```
+Adding another Windows-side config requires both the source file and an explicit copy entry in `install-windows-configs.sh`.
 
-Install and lock that version with:
+## File Conventions
 
-```bash
-make install-wezterm-pinned
-```
-
-What this does:
-
-- Installs the exact pinned Linux/WSL `wezterm-nightly` build into `~/.local/opt/wezterm-<version>`
-- Updates symlinks in `~/.local/bin` (`wezterm`, `wezterm-gui`, `wezterm-mux-server`)
-- On WSL, applies Windows-side freeze controls (best effort): `scoop hold wezterm` and `winget pin`
-
-To change versions, update `wezterm/VERSION` and re-run `make install-wezterm-pinned`.
-
-## Requirements
-
-- **GNU Stow**: Package manager for symlinks
-  - Ubuntu/Debian: `sudo apt install stow`
-  - Fedora: `sudo dnf install stow`
-  - macOS: `brew install stow`
-
-- **WSL2** (optional): Required for Windows-side config linking
-
-# Install Windows configs (WSL only)
-
-make install-windows
-
-# Install everything
-
-make install
-
-````
-
-## Managing Windows-side Files
-
-For tools that need a Windows copy of a config file, keep the source file in the repo with a `.windows.*` suffix.
-
-1. Put the Windows-specific file in the package directory.
-2. Keep it out of stow by adding the pattern to the package's `.stow-local-ignore` file.
-3. Re-run `./bootstrap.sh` or `make install-windows` whenever you update the file.
-
-### Example
-
-```bash
-wezterm/.wezterm.windows.lua
-````
-
-## Notes on Stow Ignores
-
-- Use `.stow-local-ignore` for package-local ignore rules.
-- Use `.stow-global-ignore` if you need a repo-wide ignore list for GNU Stow.
-- The root `.stow-local-ignore` in this repo is used for repo-level patterns that should not be stowed.
+- Login-time Bash PATH and environment setup belongs in `bash/.bash_profile`.
+- Interactive Bash behavior belongs in `bash/.bashrc`.
+- Bash aliases belong in `bash/.bash_aliases`.
+- Machine-local secrets and overrides belong outside the repo in `~/.bash_profile.local`.
+- Linux/WSL WezTerm config is `wezterm/.wezterm.lua`; Windows-native WezTerm config is `wezterm/.wezterm.windows.lua`.
 
 ## Requirements
 
 - GNU Stow
-- WSL if you want the Windows-side config installer
+- make
+- WSL, only for `make install-windows`

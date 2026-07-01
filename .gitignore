@@ -1,3 +1,5 @@
 /.codex-pet-runs/
 /_memo.wz/
 /.bash_profile.local/
+*/.env/*
+!.env.example

@@ -126,9 +126,19 @@ export FZF_DEFAULT_OPTS=" --height 50% --layout=default --border --color=hl:#2dd
 
 export CCLSP_CONFIG_PATH="$HOME/.config/claude/cclsp.json"
 export EDITOR="lazy"
-export HERMES_REDACT_SECRETS=false
-# export CODEX_HOME="$HOME/.codex"
-# export CODEX_CLI_PATH="$HOME/.nvm/versions/node/v22.22.2/bin/codex"
+
+# Hermes CLI configuration
+export HERMES_REDACT_SECRETS=true
+
+# Bridge WSLg PulseAudio configuration for GUI apps
+export PULSE_SERVER="unix:/mnt/wslg/PulseServer"
+
+# Codespace CLI WSL configuration
+export CODEX_HOME="$HOME/.codex"
+export CODEX_CLI_PATH="$HOME/.nvm/versions/node/v22.22.2/bin/codex"
+
+# Set the default browser to a WSL-compatible browser launcher script
+# to point to Chrome on Windows, which is useful for opening links from WSL.
 export BROWSER="$HOME/.local/bin/wsl-browser"
 
 # Load machine-local secrets outside the dotfiles repository.
